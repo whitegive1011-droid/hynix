@@ -1,10 +1,10 @@
 base_currency: HKD
 positions:
   7709.HK:
-    shares: 300
-    average_cost: 0
+    shares: 400
+    average_cost: 149.55
   7747.HK:
     shares: 0
     average_cost: 0
 cash:
-  HKD: 0
+  HKD: 20645
