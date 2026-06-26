@@ -24,8 +24,31 @@ def test_load_default_portfolio_file() -> None:
     portfolio = load_portfolio(Path("portfolio.yaml"))
 
     assert portfolio.base_currency == "HKD"
-    assert portfolio.positions["7709.HK"].shares == 300
-    assert portfolio.cash["HKD"] == 0
+    assert "7709.HK" in portfolio.positions
+    assert portfolio.positions["7709.HK"].shares >= 0
+    assert portfolio.cash["HKD"] >= 0
+
+
+def test_load_portfolio_values_from_yaml(tmp_path: Path) -> None:
+    portfolio_path = tmp_path / "portfolio.yaml"
+    portfolio_path.write_text(
+        """
+base_currency: HKD
+positions:
+  7709.HK:
+    shares: 400
+    average_cost: 149.55
+cash:
+  HKD: 20645
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    portfolio = load_portfolio(portfolio_path)
+
+    assert portfolio.positions["7709.HK"].shares == 400
+    assert portfolio.positions["7709.HK"].average_cost == 149.55
+    assert portfolio.cash["HKD"] == 20645
 
 
 def test_missing_yaml_file_raises_clear_error(tmp_path: Path) -> None:
