@@ -1,10 +1,10 @@
 PyYAML>=6.0.1
+numpy>=1.26.0
 pandas>=2.2.0
 pytest>=8.0.0
 yfinance>=0.2.50
 
 # Planned runtime dependencies for later milestones:
-# numpy
 # matplotlib
 # openpyxl
 # jinja2
