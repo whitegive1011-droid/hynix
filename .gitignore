@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+outputs/execution.log
+outputs/*.tmp
+/reports/
+work/
+data/raw/
+data/processed/
+!data/cache/
+!data/cache/market_cache.csv

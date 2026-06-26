@@ -1,0 +1,122 @@
+app:
+  timezone: Asia/Shanghai
+  output_dir: outputs
+  log_level: INFO
+  run_mode: daily
+
+data:
+  primary_provider: yfinance
+  fallback_provider: csv
+  csv_path: data/cache/market_cache.csv
+  retry_attempts: 2
+  retry_delay_seconds: 1
+  lookback_days: 260
+  required_tickers:
+    - 7709.HK
+    - 7747.HK
+    - 000660.KS
+    - 005930.KS
+    - MU
+    - NVDA
+    - MSFT
+    - GOOGL
+    - AMZN
+    - META
+    - AAPL
+    - TSLA
+    - QQQ
+    - SOXX
+
+data_quality:
+  max_data_age_hours: 36
+  max_missing_data_ratio: 0.05
+  stale_price_days: 3
+  abnormal_daily_move_pct: 20
+  confidence_penalty:
+    warning: 10
+    degraded: 25
+    failed: 50
+
+baskets:
+  ai:
+    MSFT: 0.1667
+    GOOGL: 0.1667
+    AMZN: 0.1667
+    META: 0.1667
+    AAPL: 0.1667
+    TSLA: 0.1667
+  hbm:
+    000660.KS: 0.50
+    MU: 0.25
+    005930.KS: 0.25
+
+indicators:
+  rsi_period: 14
+  adx_period: 14
+  atr_period: 14
+  bollinger_period: 20
+  bollinger_std: 2
+  moving_averages:
+    - 20
+    - 50
+    - 100
+    - 200
+
+classification:
+  uptrend_min_trend_score: 70
+  downtrend_max_trend_score: 35
+  range_min_range_score: 65
+  mixed_conflict_threshold: 2
+
+decision:
+  max_single_adjustment_shares: 100
+  min_confidence_to_add: 65
+  min_confidence_to_reduce: 55
+  high_risk_score: 75
+  uncertain_confidence_below: 45
+  base_confidence: 50
+  confidence_by_mode:
+    Uptrend: 72
+    Range: 62
+    Downtrend: 68
+    Mixed: 38
+    Capitulation: 75
+    Recovery: 66
+  uptrend_min_rsi: 50
+  uptrend_min_adx: 18
+  downtrend_max_rsi: 45
+  downtrend_min_risk_score: 55
+  range_min_rsi: 35
+  range_max_rsi: 65
+  range_buy_rsi: 35
+  range_sell_rsi: 65
+  range_max_adx: 25
+  capitulation_min_risk_score: 80
+  capitulation_ai_5d_max: -8
+  capitulation_hbm_5d_max: -12
+  recovery_ai_5d_min: 1
+  recovery_hbm_5d_min: 3
+  recovery_relative_ratio_min: 1.0
+  high_risk_level_score: 70
+  medium_risk_level_score: 35
+  max_confidence: 95
+  min_confidence: 5
+
+review:
+  forward_return_days:
+    - 1
+    - 5
+    - 20
+  reduce_success_threshold_pct: -2
+  reduce_missed_opportunity_threshold_pct: 3
+  hold_failure_threshold_pct: -5
+  add_success_threshold_pct: 3
+
+coach:
+  interactive_input: true
+  ask_reason_when_not_followed: true
+
+reports:
+  generate_excel: true
+  generate_html: true
+  generate_monthly: auto
