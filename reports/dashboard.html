@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AIOS Daily Dashboard</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f172a;
+        --panel: #111827;
+        --panel-soft: #1f2937;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #38bdf8;
+        --border: #374151;
+        --risk-high: #f87171;
+        --risk-medium: #fbbf24;
+        --risk-low: #34d399;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0;
+      }
+
+      header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 16px;
+      }
+
+      h1, h2, p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 28px;
+        line-height: 1.15;
+      }
+
+      .date {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 16px;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      .recommendation {
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1.1;
+        margin: 10px 0 16px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .metric {
+        background: var(--panel-soft);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        min-width: 0;
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 20px;
+        overflow-wrap: anywhere;
+      }
+
+      ul {
+        padding-left: 20px;
+        margin: 12px 0 0;
+      }
+
+      li {
+        margin: 8px 0;
+        color: #d1d5db;
+      }
+
+      .indicator-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .indicator {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .indicator:last-child {
+        border-bottom: 0;
+      }
+
+      .label {
+        color: var(--muted);
+      }
+
+      .value {
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .risk-High {
+        color: var(--risk-high);
+      }
+
+      .risk-Medium {
+        color: var(--risk-medium);
+      }
+
+      .risk-Low {
+        color: var(--risk-low);
+      }
+
+      .quality {
+        color: var(--accent);
+      }
+
+      @media (max-width: 760px) {
+        main {
+          width: min(100% - 20px, 680px);
+          padding: 16px 0;
+        }
+
+        header,
+        .grid {
+          display: block;
+        }
+
+        header > div:last-child {
+          margin-top: 10px;
+        }
+
+        section {
+          margin-bottom: 12px;
+          padding: 14px;
+        }
+
+        .recommendation {
+          font-size: 28px;
+        }
+
+        .metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>AIOS Daily Dashboard</h1>
+          <p class="date">2026-06-26</p>
+        </div>
+        <div class="metric">
+          <span>Market Mode</span>
+          <strong>Mixed</strong>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section>
+          <h2>Today's Recommendation</h2>
+          <p class="recommendation">Uncertain</p>
+          <div class="metrics">
+            <div class="metric">
+              <span>Confidence</span>
+              <strong>38</strong>
+            </div>
+            <div class="metric">
+              <span>Risk Level</span>
+              <strong class="risk-Low">Low</strong>
+            </div>
+            <div class="metric">
+              <span>Position Delta</span>
+              <strong>0</strong>
+            </div>
+            <div class="metric">
+              <span>Current Position</span>
+              <strong>300</strong>
+            </div>
+            <div class="metric">
+              <span>Suggested Position</span>
+              <strong>300</strong>
+            </div>
+            <div class="metric">
+              <span>Risk Score</span>
+              <strong>0.0</strong>
+            </div>
+            <div class="metric">
+              <span>Data Source</span>
+              <strong>csv</strong>
+            </div>
+            <div class="metric">
+              <span>Last Update</span>
+              <strong>2026-06-26</strong>
+            </div>
+            <div class="metric">
+              <span>Data Quality</span>
+              <strong class="quality">Degraded</strong>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Top Reasons</h2>
+          <ul>
+            
+            <li>Market classified as Mixed.</li>
+            
+            <li>Indicators do not align strongly enough for a directional mode.</li>
+            
+            <li>Conflicting signals favor watching instead of adjusting.</li>
+            
+            <li>Confidence is below the configured uncertainty threshold.</li>
+            
+          </ul>
+        </section>
+      </div>
+
+      <section style="margin-top: 16px;">
+        <h2>Key Indicators</h2>
+        <div class="indicator-list">
+          
+          <div class="indicator">
+            <span class="label">Relative Ratio</span>
+            <span class="value">N/A</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">Risk Score</span>
+            <span class="value">0.0</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">AI 5D Return</span>
+            <span class="value">N/A</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">HBM 5D Return</span>
+            <span class="value">N/A</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">D5</span>
+            <span class="value">N/A</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">D20</span>
+            <span class="value">N/A</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">RSI14</span>
+            <span class="value">100.0</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">ADX14</span>
+            <span class="value">100.0</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">MACD</span>
+            <span class="value">0.49</span>
+          </div>
+          
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

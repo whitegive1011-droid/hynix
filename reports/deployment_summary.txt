@@ -1,0 +1,11 @@
+AIOS Deployment Summary
+=======================
+Execution Time: 2.57s
+Provider Used: csv
+Data Source: csv
+Data Quality: Degraded
+Last Update: 2026-06-26
+Fallback Used: True
+Missing Tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX
+Test Result: passed
+Deployment Status: generated

@@ -1,0 +1,26 @@
+2026-06-26 17:50:53,539 INFO root AIOS run started.
+2026-06-26 17:50:53,539 INFO root Config loaded from config.yaml
+2026-06-26 17:50:53,539 INFO root Portfolio loaded from portfolio.yaml
+2026-06-26 17:50:53,539 INFO root Output directory: reports
+2026-06-26 17:50:53,540 INFO root Run mode: daily
+2026-06-26 17:50:53,540 INFO root Interactive input: False
+2026-06-26 17:50:53,540 INFO root Required tickers configured: 14
+2026-06-26 17:50:53,540 INFO root Portfolio positions configured: 2
+2026-06-26 17:50:53,540 INFO root Fetching market data from yfinance for 14 tickers. Attempt 1/2.
+2026-06-26 17:50:54,923 WARNING root Market data fetch failed from yfinance on attempt 1/2: "['date'] not in index"
+2026-06-26 17:50:55,923 INFO root Fetching market data from yfinance for 14 tickers. Attempt 2/2.
+2026-06-26 17:50:56,018 WARNING root Market data fetch failed from yfinance on attempt 2/2: "['date'] not in index"
+2026-06-26 17:50:56,018 WARNING root All fetch attempts failed: "['date'] not in index"
+2026-06-26 17:50:56,019 WARNING root Primary provider returned no data. Falling back to CSV cache: data/cache/market_cache.csv
+2026-06-26 17:50:56,019 INFO root Fetching market data from csv for 14 tickers. Attempt 1/1.
+2026-06-26 17:50:56,022 INFO root Provider used: csv
+2026-06-26 17:50:56,022 INFO root Data quality: Degraded
+2026-06-26 17:50:56,031 INFO root Market history written to reports/history.csv with 10 rows.
+2026-06-26 17:50:56,097 INFO root Latest signal written to reports/latest_signal.json
+2026-06-26 17:50:56,097 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-26 17:50:56,097 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-26 17:50:56,097 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-26 17:50:56,097 INFO root Recommendation: Uncertain
+2026-06-26 17:50:56,097 INFO root Market mode: Mixed
+2026-06-26 17:50:56,097 INFO root Confidence: 38
+2026-06-26 17:50:56,097 INFO root AIOS run completed.
