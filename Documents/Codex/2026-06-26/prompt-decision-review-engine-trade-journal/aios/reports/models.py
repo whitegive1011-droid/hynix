@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 from pathlib import Path
 from typing import Any
 
@@ -138,6 +139,8 @@ def _indicator(
         return KeyIndicator(label=label, value=None, display_value="N/A")
     if isinstance(value, str):
         return KeyIndicator(label=label, value=value, display_value=value)
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return KeyIndicator(label=label, value=None, display_value="N/A")
     return KeyIndicator(
         label=label,
         value=value,

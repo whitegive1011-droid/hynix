@@ -1,15 +1,20 @@
 from pathlib import Path
 
+import yaml
+
 
 def test_github_actions_runs_tests_before_deployment() -> None:
-    workflow = Path(".github/workflows/aios-ci-cd.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow_path = Path(".github/workflows/aios-ci-cd.yml")
+    workflow = workflow_path.read_text(encoding="utf-8")
+    parsed = yaml.load(workflow, Loader=yaml.BaseLoader)
 
     pytest_index = workflow.index("python -m pytest")
     generate_index = workflow.index("Generate AIOS reports")
     deploy_index = workflow.index("Deploy GitHub Pages")
 
+    assert parsed["name"] == "AIOS CI/CD"
+    assert "on" in parsed
+    assert "test-generate-and-deploy" in parsed["jobs"]
     assert pytest_index < generate_index < deploy_index
     assert "actions/deploy-pages@v4" in workflow
     assert "reports/dashboard.html" in workflow

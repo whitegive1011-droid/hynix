@@ -310,7 +310,7 @@ class AiosRunner:
         stored = upsert_csv(
             path=history_path,
             frame=history,
-            key_columns=["date", "ticker", "source"],
+            key_columns=["date", "ticker"],
         )
         logging.info(
             "Market history written to %s with %s rows.",
