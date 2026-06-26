@@ -71,6 +71,33 @@ decision:
   min_confidence_to_reduce: 55
   high_risk_score: 75
   uncertain_confidence_below: 45
+  base_confidence: 50
+  confidence_by_mode:
+    Uptrend: 72
+    Range: 62
+    Downtrend: 68
+    Mixed: 38
+    Capitulation: 75
+    Recovery: 66
+  uptrend_min_rsi: 50
+  uptrend_min_adx: 18
+  downtrend_max_rsi: 45
+  downtrend_min_risk_score: 55
+  range_min_rsi: 35
+  range_max_rsi: 65
+  range_buy_rsi: 35
+  range_sell_rsi: 65
+  range_max_adx: 25
+  capitulation_min_risk_score: 80
+  capitulation_ai_5d_max: -8
+  capitulation_hbm_5d_max: -12
+  recovery_ai_5d_min: 1
+  recovery_hbm_5d_min: 3
+  recovery_relative_ratio_min: 1.0
+  high_risk_level_score: 70
+  medium_risk_level_score: 35
+  max_confidence: 95
+  min_confidence: 5
 
 review:
   forward_return_days:

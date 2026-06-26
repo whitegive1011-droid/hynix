@@ -161,9 +161,47 @@ class DecisionConfig:
     min_confidence_to_reduce: int = 55
     high_risk_score: int = 75
     uncertain_confidence_below: int = 45
+    base_confidence: int = 50
+    confidence_by_mode: dict[str, int] = field(
+        default_factory=lambda: {
+            "Uptrend": 72,
+            "Range": 62,
+            "Downtrend": 68,
+            "Mixed": 38,
+            "Capitulation": 75,
+            "Recovery": 66,
+        }
+    )
+    uptrend_min_rsi: float = 50.0
+    uptrend_min_adx: float = 18.0
+    downtrend_max_rsi: float = 45.0
+    downtrend_min_risk_score: float = 55.0
+    range_min_rsi: float = 35.0
+    range_max_rsi: float = 65.0
+    range_buy_rsi: float = 35.0
+    range_sell_rsi: float = 65.0
+    range_max_adx: float = 25.0
+    capitulation_min_risk_score: float = 80.0
+    capitulation_ai_5d_max: float = -8.0
+    capitulation_hbm_5d_max: float = -12.0
+    recovery_ai_5d_min: float = 1.0
+    recovery_hbm_5d_min: float = 3.0
+    recovery_relative_ratio_min: float = 1.0
+    high_risk_level_score: float = 70.0
+    medium_risk_level_score: float = 35.0
+    max_confidence: int = 95
+    min_confidence: int = 5
 
     @classmethod
     def from_mapping(cls, data: dict[str, Any]) -> "DecisionConfig":
+        defaults = cls()
+        confidence_by_mode = data.get(
+            "confidence_by_mode",
+            defaults.confidence_by_mode,
+        )
+        if not isinstance(confidence_by_mode, dict):
+            raise ValueError("decision.confidence_by_mode must be a mapping")
+
         return cls(
             max_single_adjustment_shares=_as_int(
                 data.get("max_single_adjustment_shares"),
@@ -183,6 +221,90 @@ class DecisionConfig:
             uncertain_confidence_below=_as_int(
                 data.get("uncertain_confidence_below"),
                 cls.uncertain_confidence_below,
+            ),
+            base_confidence=_as_int(
+                data.get("base_confidence"),
+                cls.base_confidence,
+            ),
+            confidence_by_mode={
+                str(mode): int(confidence)
+                for mode, confidence in confidence_by_mode.items()
+            },
+            uptrend_min_rsi=_as_float(
+                data.get("uptrend_min_rsi"),
+                cls.uptrend_min_rsi,
+            ),
+            uptrend_min_adx=_as_float(
+                data.get("uptrend_min_adx"),
+                cls.uptrend_min_adx,
+            ),
+            downtrend_max_rsi=_as_float(
+                data.get("downtrend_max_rsi"),
+                cls.downtrend_max_rsi,
+            ),
+            downtrend_min_risk_score=_as_float(
+                data.get("downtrend_min_risk_score"),
+                cls.downtrend_min_risk_score,
+            ),
+            range_min_rsi=_as_float(
+                data.get("range_min_rsi"),
+                cls.range_min_rsi,
+            ),
+            range_max_rsi=_as_float(
+                data.get("range_max_rsi"),
+                cls.range_max_rsi,
+            ),
+            range_buy_rsi=_as_float(
+                data.get("range_buy_rsi"),
+                cls.range_buy_rsi,
+            ),
+            range_sell_rsi=_as_float(
+                data.get("range_sell_rsi"),
+                cls.range_sell_rsi,
+            ),
+            range_max_adx=_as_float(
+                data.get("range_max_adx"),
+                cls.range_max_adx,
+            ),
+            capitulation_min_risk_score=_as_float(
+                data.get("capitulation_min_risk_score"),
+                cls.capitulation_min_risk_score,
+            ),
+            capitulation_ai_5d_max=_as_float(
+                data.get("capitulation_ai_5d_max"),
+                cls.capitulation_ai_5d_max,
+            ),
+            capitulation_hbm_5d_max=_as_float(
+                data.get("capitulation_hbm_5d_max"),
+                cls.capitulation_hbm_5d_max,
+            ),
+            recovery_ai_5d_min=_as_float(
+                data.get("recovery_ai_5d_min"),
+                cls.recovery_ai_5d_min,
+            ),
+            recovery_hbm_5d_min=_as_float(
+                data.get("recovery_hbm_5d_min"),
+                cls.recovery_hbm_5d_min,
+            ),
+            recovery_relative_ratio_min=_as_float(
+                data.get("recovery_relative_ratio_min"),
+                cls.recovery_relative_ratio_min,
+            ),
+            high_risk_level_score=_as_float(
+                data.get("high_risk_level_score"),
+                cls.high_risk_level_score,
+            ),
+            medium_risk_level_score=_as_float(
+                data.get("medium_risk_level_score"),
+                cls.medium_risk_level_score,
+            ),
+            max_confidence=_as_int(
+                data.get("max_confidence"),
+                cls.max_confidence,
+            ),
+            min_confidence=_as_int(
+                data.get("min_confidence"),
+                cls.min_confidence,
             ),
         )
 
