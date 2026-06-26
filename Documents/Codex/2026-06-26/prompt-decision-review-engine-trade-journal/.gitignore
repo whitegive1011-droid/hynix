@@ -4,7 +4,9 @@ __pycache__/
 .venv/
 outputs/execution.log
 outputs/*.tmp
-reports/
+/reports/
 work/
 data/raw/
 data/processed/
+!data/cache/
+!data/cache/market_cache.csv

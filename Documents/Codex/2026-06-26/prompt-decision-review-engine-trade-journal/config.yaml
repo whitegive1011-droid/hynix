@@ -6,7 +6,10 @@ app:
 
 data:
   primary_provider: yfinance
-  fallback_provider: cache
+  fallback_provider: csv
+  csv_path: data/cache/market_cache.csv
+  retry_attempts: 2
+  retry_delay_seconds: 1
   lookback_days: 260
   required_tickers:
     - 7709.HK

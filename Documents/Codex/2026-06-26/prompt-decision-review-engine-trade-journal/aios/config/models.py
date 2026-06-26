@@ -45,10 +45,12 @@ class AppConfig:
 @dataclass(frozen=True)
 class DataConfig:
     primary_provider: str = "yfinance"
-    fallback_provider: str = "cache"
+    fallback_provider: str = "csv"
     lookback_days: int = 260
     required_tickers: list[str] = field(default_factory=list)
     csv_path: Path | None = None
+    retry_attempts: int = 2
+    retry_delay_seconds: float = 1.0
 
     @classmethod
     def from_mapping(cls, data: dict[str, Any]) -> "DataConfig":
@@ -68,6 +70,14 @@ class DataConfig:
                 Path(data["csv_path"])
                 if data.get("csv_path") is not None
                 else None
+            ),
+            retry_attempts=_as_int(
+                data.get("retry_attempts"),
+                cls.retry_attempts,
+            ),
+            retry_delay_seconds=_as_float(
+                data.get("retry_delay_seconds"),
+                cls.retry_delay_seconds,
             ),
         )
 

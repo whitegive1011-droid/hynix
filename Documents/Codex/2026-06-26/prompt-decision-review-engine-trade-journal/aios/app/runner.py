@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
+import os
+import time
 from dataclasses import replace
 from pathlib import Path
 
 from aios.app.context import RunContext
-from aios.app.models import MarketState, PortfolioState
+from aios.app.models import MarketState, PortfolioState, RunMetadata
 from aios.config.loader import load_config, load_portfolio
 from aios.config.models import PortfolioConfig
 from aios.data.models import MarketDataRequest, prepare_history_frame
@@ -21,6 +23,7 @@ from aios.decision.models import (
 from aios.market.baskets import calculate_basket_metrics
 from aios.market.indicators import add_technical_indicators
 from aios.reports.models import build_presentation_context
+from aios.reports.deployment import write_deployment_summary
 from aios.reports.presentation import generate_presentation_outputs
 from aios.storage.csv_store import upsert_csv
 from aios.storage.paths import ensure_output_dir
@@ -54,6 +57,7 @@ class AiosRunner:
         self.dry_run = dry_run
 
     def run(self) -> int:
+        started = time.perf_counter()
         config = load_config(self.config_path)
         portfolio = self._load_portfolio_or_default(self.portfolio_path)
 
@@ -82,7 +86,7 @@ class AiosRunner:
         )
 
         self._log_startup(context)
-        self._run_pipeline(context)
+        self._run_pipeline(context, started_at=started)
         logging.info("AIOS run completed.")
         return 0
 
@@ -115,15 +119,15 @@ class AiosRunner:
             len(context.portfolio.positions),
         )
 
-    def _run_pipeline(self, context: RunContext) -> None:
+    def _run_pipeline(self, context: RunContext, started_at: float) -> None:
         run_timestamp = current_run_timestamp(context.config.app.timezone)
         run_id = run_id_from_timestamp(run_timestamp)
-        prices = self._fetch_market_data(context)
+        prices, metadata = self._fetch_market_data(context)
         history = prepare_history_frame(
             prices=prices,
             run_id=run_id,
             run_timestamp=run_timestamp,
-            source=context.config.data.primary_provider,
+            source=metadata.provider_used,
         )
 
         if self.dry_run:
@@ -147,6 +151,7 @@ class AiosRunner:
             basket=market_state.basket,
             technical=market_state.technical,
             portfolio=portfolio_state.to_position(),
+            metadata=metadata,
         )
 
         if not self.dry_run:
@@ -154,9 +159,23 @@ class AiosRunner:
                 presentation,
                 context.output_dir,
             )
+            metadata = replace(
+                metadata,
+                execution_time_seconds=time.perf_counter() - started_at,
+            )
+            summary_path = write_deployment_summary(
+                output_dir=context.output_dir,
+                metadata=metadata,
+                test_result=os.environ.get("AIOS_TEST_RESULT", "not_run"),
+                deployment_status=os.environ.get(
+                    "AIOS_DEPLOYMENT_STATUS",
+                    "generated",
+                ),
+            )
             logging.info("Latest signal written to %s", paths.latest_signal)
             logging.info("Excel dashboard written to %s", paths.excel_dashboard)
             logging.info("HTML dashboard written to %s", paths.html_dashboard)
+            logging.info("Deployment summary written to %s", summary_path)
 
         logging.info("Recommendation: %s", decision.recommendation)
         logging.info("Market mode: %s", decision.market_mode.value)
@@ -167,16 +186,123 @@ class AiosRunner:
             tickers=context.config.data.required_tickers,
             lookback_days=context.config.data.lookback_days,
         )
-        provider = create_market_data_provider(
-            context.config.data.primary_provider,
+        prices = self._fetch_with_retry(
+            provider_name=context.config.data.primary_provider,
+            request=request,
             csv_path=context.config.data.csv_path,
+            attempts=max(1, context.config.data.retry_attempts),
+            retry_delay_seconds=context.config.data.retry_delay_seconds,
         )
-        logging.info(
-            "Fetching market data from %s for %s tickers.",
-            provider.source_name,
-            len(request.tickers),
+
+        provider_used = context.config.data.primary_provider
+        fallback_used = False
+        if prices.empty and context.config.data.primary_provider == "yfinance":
+            fallback_path = self._resolve_csv_cache_path(context)
+            logging.warning(
+                "Primary provider returned no data. Falling back to CSV cache: %s",
+                fallback_path,
+            )
+            prices = self._fetch_with_retry(
+                provider_name=context.config.data.fallback_provider,
+                request=request,
+                csv_path=fallback_path,
+                attempts=1,
+                retry_delay_seconds=0,
+            )
+            provider_used = context.config.data.fallback_provider
+            fallback_used = True
+
+        metadata = self._build_run_metadata(
+            prices=prices,
+            provider_used=provider_used,
+            required_tickers=context.config.data.required_tickers,
+            fallback_used=fallback_used,
         )
-        return provider.fetch(request)
+        logging.info("Provider used: %s", metadata.provider_used)
+        logging.info("Data quality: %s", metadata.data_quality)
+        return prices, metadata
+
+    def _fetch_with_retry(
+        self,
+        provider_name: str,
+        request: MarketDataRequest,
+        csv_path: Path | None,
+        attempts: int,
+        retry_delay_seconds: float,
+    ):
+        provider = create_market_data_provider(provider_name, csv_path=csv_path)
+        last_error: Exception | None = None
+        for attempt in range(1, attempts + 1):
+            try:
+                logging.info(
+                    "Fetching market data from %s for %s tickers. Attempt %s/%s.",
+                    provider.source_name,
+                    len(request.tickers),
+                    attempt,
+                    attempts,
+                )
+                prices = provider.fetch(request)
+                if not prices.empty:
+                    return prices
+            except Exception as exc:  # pragma: no cover - defensive logging
+                last_error = exc
+                logging.warning(
+                    "Market data fetch failed from %s on attempt %s/%s: %s",
+                    provider.source_name,
+                    attempt,
+                    attempts,
+                    exc,
+                )
+            if attempt < attempts and retry_delay_seconds > 0:
+                time.sleep(retry_delay_seconds)
+
+        if last_error is not None:
+            logging.warning("All fetch attempts failed: %s", last_error)
+        return provider.fetch(MarketDataRequest(tickers=[], lookback_days=0))
+
+    @staticmethod
+    def _resolve_csv_cache_path(context: RunContext) -> Path:
+        if context.config.data.csv_path is not None:
+            return context.config.data.csv_path
+        return context.output_dir / "history.csv"
+
+    @staticmethod
+    def _build_run_metadata(
+        prices,
+        provider_used: str,
+        required_tickers: list[str],
+        fallback_used: bool,
+    ) -> RunMetadata:
+        if prices.empty:
+            return RunMetadata(
+                data_source=provider_used,
+                provider_used=provider_used,
+                last_update="N/A",
+                data_quality="Failed",
+                missing_tickers=required_tickers,
+                fallback_used=fallback_used,
+            )
+
+        available_tickers = set(prices["ticker"].astype(str).unique())
+        missing_tickers = [
+            ticker for ticker in required_tickers if ticker not in available_tickers
+        ]
+        last_update = str(max(prices["date"].astype(str)))
+        if missing_tickers:
+            data_quality = "Degraded"
+        elif fallback_used:
+            data_quality = "Fallback"
+        else:
+            data_quality = "OK"
+
+        return RunMetadata(
+            data_source=provider_used,
+            provider_used=provider_used,
+            last_update=last_update,
+            data_quality=data_quality,
+            missing_tickers=missing_tickers,
+            fallback_used=fallback_used,
+        )
 
     @staticmethod
     def _store_history(context: RunContext, history) -> None:

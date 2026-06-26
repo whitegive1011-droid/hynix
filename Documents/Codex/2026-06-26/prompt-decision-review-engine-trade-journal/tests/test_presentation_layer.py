@@ -5,6 +5,7 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
+from aios.app.models import RunMetadata
 from aios.decision.models import (
     BasketSnapshot,
     DecisionResult,
@@ -30,6 +31,9 @@ def test_context_to_dict_renders_decision_without_recalculating() -> None:
     assert payload["suggested_position"] == 300
     assert payload["relative_ratio"] == 1.08
     assert payload["risk_score"] == 12.5
+    assert payload["data_source"] == "csv"
+    assert payload["last_update"] == "2026-06-26"
+    assert payload["data_quality"] == "OK"
     assert payload["top_reasons"] == [
         "Market classified as Uptrend.",
         "Trend rules favor holding the current position.",
@@ -48,6 +52,8 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
 
     signal = json.loads(paths.latest_signal.read_text(encoding="utf-8"))
     assert signal["recommendation"] == "Hold"
+    assert signal["data_source"] == "csv"
+    assert signal["data_quality"] == "OK"
     assert signal["key_indicators"][0]["label"] == "Relative Ratio"
 
     html = paths.html_dashboard.read_text(encoding="utf-8")
@@ -55,6 +61,8 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert "Today's Recommendation" in html
     assert "Hold" in html
     assert "Risk Score" in html
+    assert "Data Source" in html
+    assert "Data Quality" in html
     assert "@media (max-width: 760px)" in html
     assert "<script" not in html.lower()
 
@@ -62,12 +70,15 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert workbook.sheetnames == ["Dashboard", "Key Indicators", "Reasons"]
 
     dashboard = workbook["Dashboard"]
-    assert dashboard["B4"].value == "Hold"
-    assert dashboard["B5"].value == 72
-    assert dashboard["B6"].value == "Low"
-    assert dashboard["B7"].value == "Uptrend"
+    assert dashboard["B4"].value == "csv"
+    assert dashboard["B5"].value == "2026-06-26"
+    assert dashboard["B6"].value == "OK"
+    assert dashboard["B7"].value == "Hold"
+    assert dashboard["B8"].value == 72
+    assert dashboard["B9"].value == "Low"
+    assert dashboard["B10"].value == "Uptrend"
     assert dashboard.freeze_panes == "A3"
-    assert dashboard.auto_filter.ref == "A3:B12"
+    assert dashboard.auto_filter.ref == "A3:B15"
     assert len(dashboard._charts) == 1
     assert len(list(dashboard.conditional_formatting)) > 0
 
@@ -130,4 +141,11 @@ def _presentation_context():
         basket=basket,
         technical=technical,
         portfolio=portfolio,
+        metadata=RunMetadata(
+            data_source="csv",
+            provider_used="csv",
+            last_update="2026-06-26",
+            data_quality="OK",
+            missing_tickers=[],
+        ),
     )

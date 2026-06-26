@@ -12,6 +12,7 @@ from aios.decision.models import (
     PortfolioPosition,
     TechnicalSnapshot,
 )
+from aios.app.models import RunMetadata
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class PresentationContext:
     basket: BasketSnapshot
     technical: TechnicalSnapshot
     portfolio: PortfolioPosition
+    metadata: RunMetadata
     key_indicators: list[KeyIndicator] = field(default_factory=list)
 
     @property
@@ -56,9 +58,17 @@ def build_presentation_context(
     basket: BasketSnapshot,
     technical: TechnicalSnapshot,
     portfolio: PortfolioPosition,
+    metadata: RunMetadata | None = None,
 ) -> PresentationContext:
     """Assemble already-computed values for rendering."""
 
+    metadata = metadata or RunMetadata(
+        data_source="unknown",
+        provider_used="unknown",
+        last_update="N/A",
+        data_quality="Unknown",
+        missing_tickers=[],
+    )
     key_indicators = [
         _indicator("Relative Ratio", basket.relative_ratio, precision=3),
         _indicator("Risk Score", basket.risk_score, precision=1),
@@ -75,6 +85,7 @@ def build_presentation_context(
         basket=basket,
         technical=technical,
         portfolio=portfolio,
+        metadata=metadata,
         key_indicators=key_indicators,
     )
 
@@ -96,6 +107,12 @@ def context_to_dict(context: PresentationContext) -> dict[str, Any]:
         "triggered_rules": decision.triggered_rules,
         "relative_ratio": context.basket.relative_ratio,
         "risk_score": context.basket.risk_score,
+        "data_source": context.metadata.data_source,
+        "provider_used": context.metadata.provider_used,
+        "last_update": context.metadata.last_update,
+        "data_quality": context.metadata.data_quality,
+        "fallback_used": context.metadata.fallback_used,
+        "missing_tickers": context.metadata.missing_tickers,
         "key_indicators": [
             {
                 "label": indicator.label,

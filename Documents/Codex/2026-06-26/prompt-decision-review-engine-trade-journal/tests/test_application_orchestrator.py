@@ -7,6 +7,8 @@ from pathlib import Path
 import pandas as pd
 from openpyxl import load_workbook
 
+from aios.data.models import PRICE_COLUMNS
+from aios.data.providers import CsvMarketDataProvider
 from main import main
 
 
@@ -75,6 +77,7 @@ cash:
     assert (output_dir / "dashboard.html").exists()
     assert (output_dir / "history.csv").exists()
     assert (output_dir / "execution.log").exists()
+    assert (output_dir / "deployment_summary.txt").exists()
 
     signal = json.loads((output_dir / "latest_signal.json").read_text())
     assert signal["recommendation"] in {
@@ -87,6 +90,8 @@ cash:
     }
     assert signal["current_position"] == 200
     assert signal["portfolio"]["ticker"] == "HBM1"
+    assert signal["provider_used"] == "csv"
+    assert signal["data_quality"] == "OK"
     assert signal["top_reasons"]
 
     html = (output_dir / "dashboard.html").read_text(encoding="utf-8")
@@ -94,10 +99,34 @@ cash:
     assert signal["recommendation"] in html
 
     workbook = load_workbook(output_dir / "investment_dashboard.xlsx")
-    assert workbook["Dashboard"]["B4"].value == signal["recommendation"]
+    assert workbook["Dashboard"]["B4"].value == "csv"
+    assert workbook["Dashboard"]["B7"].value == signal["recommendation"]
 
     history = pd.read_csv(output_dir / "history.csv")
     assert set(history["ticker"]) == {"HBM1", "HBM2", "AI1", "AI2"}
+    first_history_rows = len(history)
+
+    assert main(
+        [
+            "--config",
+            str(config_path),
+            "--portfolio",
+            str(portfolio_path),
+            "--provider",
+            "csv",
+            "--output-dir",
+            str(output_dir),
+            "--no-input",
+        ]
+    ) == 0
+    history_after_second_run = pd.read_csv(output_dir / "history.csv")
+    assert len(history_after_second_run) == first_history_rows
+
+    summary = (output_dir / "deployment_summary.txt").read_text(encoding="utf-8")
+    assert "Execution Time:" in summary
+    assert "Provider Used: csv" in summary
+    assert "Test Result:" in summary
+    assert "Deployment Status:" in summary
 
 
 def test_main_uses_safe_default_portfolio_when_missing(tmp_path: Path) -> None:
@@ -146,6 +175,91 @@ coach:
     assert exit_code == 0
     assert signal["current_position"] == 0
     assert "Using safe defaults" in (output_dir / "execution.log").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_main_falls_back_to_csv_cache_when_yahoo_returns_empty(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    csv_path = _write_orchestrator_fixture(tmp_path)
+    config_path = tmp_path / "config.yaml"
+    portfolio_path = tmp_path / "portfolio.yaml"
+    output_dir = tmp_path / "reports"
+
+    config_path.write_text(
+        f"""
+app:
+  output_dir: {output_dir}
+  log_level: INFO
+data:
+  primary_provider: yfinance
+  fallback_provider: csv
+  csv_path: {csv_path}
+  retry_attempts: 1
+  retry_delay_seconds: 0
+  lookback_days: 60
+  required_tickers:
+    - HBM1
+    - AI1
+baskets:
+  ai:
+    AI1: 1.0
+  hbm:
+    HBM1: 1.0
+coach:
+  interactive_input: false
+""",
+        encoding="utf-8",
+    )
+    portfolio_path.write_text(
+        """
+base_currency: HKD
+positions:
+  HBM1:
+    shares: 200
+    average_cost: 10
+cash:
+  HKD: 0
+""",
+        encoding="utf-8",
+    )
+
+    class EmptyYFinanceProvider:
+        source_name = "yfinance"
+
+        def fetch(self, request):
+            return pd.DataFrame(columns=PRICE_COLUMNS)
+
+    def fake_provider_factory(name, csv_path=None):
+        if name == "yfinance":
+            return EmptyYFinanceProvider()
+        return CsvMarketDataProvider(csv_path)
+
+    monkeypatch.setattr(
+        "aios.app.runner.create_market_data_provider",
+        fake_provider_factory,
+    )
+
+    assert main(
+        [
+            "--config",
+            str(config_path),
+            "--portfolio",
+            str(portfolio_path),
+            "--provider",
+            "yfinance",
+            "--output-dir",
+            str(output_dir),
+            "--no-input",
+        ]
+    ) == 0
+
+    signal = json.loads((output_dir / "latest_signal.json").read_text())
+    assert signal["provider_used"] == "csv"
+    assert signal["fallback_used"] is True
+    assert "Falling back to CSV cache" in (output_dir / "execution.log").read_text(
         encoding="utf-8"
     )
 

@@ -11,7 +11,9 @@ def test_load_default_config_file() -> None:
     assert config.app.timezone == "Asia/Shanghai"
     assert config.app.output_dir == Path("outputs")
     assert config.data.primary_provider == "yfinance"
-    assert config.data.csv_path is None
+    assert config.data.fallback_provider == "csv"
+    assert config.data.csv_path == Path("data/cache/market_cache.csv")
+    assert config.data.retry_attempts == 2
     assert "7709.HK" in config.data.required_tickers
     assert config.data_quality.confidence_penalty["failed"] == 50
     assert config.baskets.hbm["000660.KS"] == 0.5

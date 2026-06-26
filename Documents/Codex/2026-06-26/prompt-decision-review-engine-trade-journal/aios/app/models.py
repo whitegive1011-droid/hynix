@@ -27,3 +27,16 @@ class PortfolioState:
             ticker=self.primary_ticker,
             current_shares=self.current_shares,
         )
+
+
+@dataclass(frozen=True)
+class RunMetadata:
+    """Operational metadata for dashboard and deployment reporting."""
+
+    data_source: str
+    provider_used: str
+    last_update: str
+    data_quality: str
+    missing_tickers: list[str]
+    fallback_used: bool = False
+    execution_time_seconds: float = 0.0

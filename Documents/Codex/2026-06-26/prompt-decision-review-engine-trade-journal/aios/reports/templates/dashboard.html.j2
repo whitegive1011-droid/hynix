@@ -156,6 +156,10 @@
         color: var(--risk-low);
       }
 
+      .quality {
+        color: var(--accent);
+      }
+
       @media (max-width: 760px) {
         main {
           width: min(100% - 20px, 680px);
@@ -227,6 +231,18 @@
             <div class="metric">
               <span>Risk Score</span>
               <strong>{{ signal.risk_score }}</strong>
+            </div>
+            <div class="metric">
+              <span>Data Source</span>
+              <strong>{{ signal.data_source }}</strong>
+            </div>
+            <div class="metric">
+              <span>Last Update</span>
+              <strong>{{ signal.last_update }}</strong>
+            </div>
+            <div class="metric">
+              <span>Data Quality</span>
+              <strong class="quality">{{ signal.data_quality }}</strong>
             </div>
           </div>
         </section>

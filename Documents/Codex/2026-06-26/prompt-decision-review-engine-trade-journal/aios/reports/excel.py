@@ -52,6 +52,9 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
 
     rows = [
         ("Date", context.date),
+        ("Data Source", context.metadata.data_source),
+        ("Last Update", context.metadata.last_update),
+        ("Data Quality", context.metadata.data_quality),
         ("Today's Recommendation", decision.recommendation),
         ("Confidence", decision.confidence),
         ("Risk Level", decision.risk_level.value),
@@ -82,7 +85,7 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
     _apply_dashboard_conditional_formatting(sheet)
     _add_indicator_chart(sheet, context)
     sheet.freeze_panes = "A3"
-    sheet.auto_filter.ref = "A3:B12"
+    sheet.auto_filter.ref = "A3:B15"
 
 
 def _render_indicators_sheet(sheet, context: PresentationContext) -> None:
