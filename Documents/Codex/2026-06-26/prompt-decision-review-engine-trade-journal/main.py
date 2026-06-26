@@ -24,6 +24,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to the portfolio YAML file.",
     )
     parser.add_argument(
+        "--provider",
+        choices=["yfinance", "csv"],
+        default=None,
+        help="Market data provider override.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="reports",
+        help="Directory for generated reports and logs.",
+    )
+    parser.add_argument(
         "--mode",
         default=None,
         choices=["daily", "monthly"],
@@ -34,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Disable interactive Investment Coach input.",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run the pipeline without writing reports or history files.",
+    )
     return parser
 
 
@@ -43,7 +59,10 @@ def main(argv: list[str] | None = None) -> int:
         config_path=Path(args.config),
         portfolio_path=Path(args.portfolio),
         mode_override=args.mode,
+        provider_override=args.provider,
+        output_dir_override=Path(args.output_dir),
         no_input=args.no_input,
+        dry_run=args.dry_run,
     )
     return runner.run()
 

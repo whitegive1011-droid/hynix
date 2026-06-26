@@ -24,7 +24,10 @@ def upsert_csv(
 
     if csv_path.exists():
         existing = pd.read_csv(csv_path)
-        combined = pd.concat([existing, frame], ignore_index=True)
+        if existing.empty:
+            combined = frame.copy()
+        else:
+            combined = pd.concat([existing, frame], ignore_index=True)
     else:
         combined = frame.copy()
 

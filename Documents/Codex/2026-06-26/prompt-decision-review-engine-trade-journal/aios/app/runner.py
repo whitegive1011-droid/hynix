@@ -3,12 +3,25 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 from aios.app.context import RunContext
+from aios.app.models import MarketState, PortfolioState
 from aios.config.loader import load_config, load_portfolio
+from aios.config.models import PortfolioConfig
 from aios.data.models import MarketDataRequest, prepare_history_frame
 from aios.data.providers import create_market_data_provider
+from aios.decision.engine import DecisionEngine
+from aios.decision.models import (
+    BasketSnapshot,
+    DecisionInput,
+    TechnicalSnapshot,
+)
+from aios.market.baskets import calculate_basket_metrics
+from aios.market.indicators import add_technical_indicators
+from aios.reports.models import build_presentation_context
+from aios.reports.presentation import generate_presentation_outputs
 from aios.storage.csv_store import upsert_csv
 from aios.storage.paths import ensure_output_dir
 from aios.utils.dates import current_run_timestamp, run_id_from_timestamp
@@ -18,8 +31,8 @@ from aios.utils.logging import configure_logging
 class AiosRunner:
     """Coordinate one AIOS run.
 
-    Market data is fetched and stored in Milestone 2. Decision and review
-    modules are added in later milestones.
+    The runner is an application orchestrator. It connects existing modules
+    without embedding indicator formulas or trading rules.
     """
 
     def __init__(
@@ -27,19 +40,32 @@ class AiosRunner:
         config_path: Path,
         portfolio_path: Path,
         mode_override: str | None = None,
+        provider_override: str | None = None,
+        output_dir_override: Path | None = None,
         no_input: bool = False,
+        dry_run: bool = False,
     ) -> None:
         self.config_path = config_path
         self.portfolio_path = portfolio_path
         self.mode_override = mode_override
+        self.provider_override = provider_override
+        self.output_dir_override = output_dir_override
         self.no_input = no_input
+        self.dry_run = dry_run
 
     def run(self) -> int:
         config = load_config(self.config_path)
-        portfolio = load_portfolio(self.portfolio_path)
+        portfolio = self._load_portfolio_or_default(self.portfolio_path)
 
         if self.mode_override:
             config.app.run_mode = self.mode_override
+        if self.output_dir_override:
+            config.app.output_dir = self.output_dir_override
+        if self.provider_override:
+            config.data = replace(
+                config.data,
+                primary_provider=self.provider_override,
+            )
 
         output_dir = ensure_output_dir(config.app.output_dir)
         configure_logging(output_dir, config.app.log_level)
@@ -56,15 +82,27 @@ class AiosRunner:
         )
 
         self._log_startup(context)
-        self._fetch_and_store_market_history(context)
+        self._run_pipeline(context)
         logging.info("AIOS run completed.")
         return 0
+
+    @staticmethod
+    def _load_portfolio_or_default(portfolio_path: Path) -> PortfolioConfig:
+        if portfolio_path.exists():
+            return load_portfolio(portfolio_path)
+        return PortfolioConfig()
 
     @staticmethod
     def _log_startup(context: RunContext) -> None:
         logging.info("AIOS run started.")
         logging.info("Config loaded from %s", context.config_path)
-        logging.info("Portfolio loaded from %s", context.portfolio_path)
+        if context.portfolio_path.exists():
+            logging.info("Portfolio loaded from %s", context.portfolio_path)
+        else:
+            logging.warning(
+                "Portfolio file %s not found. Using safe defaults.",
+                context.portfolio_path,
+            )
         logging.info("Output directory: %s", context.output_dir)
         logging.info("Run mode: %s", context.config.app.run_mode)
         logging.info("Interactive input: %s", context.interactive_input)
@@ -77,10 +115,54 @@ class AiosRunner:
             len(context.portfolio.positions),
         )
 
-    @staticmethod
-    def _fetch_and_store_market_history(context: RunContext) -> None:
+    def _run_pipeline(self, context: RunContext) -> None:
         run_timestamp = current_run_timestamp(context.config.app.timezone)
         run_id = run_id_from_timestamp(run_timestamp)
+        prices = self._fetch_market_data(context)
+        history = prepare_history_frame(
+            prices=prices,
+            run_id=run_id,
+            run_timestamp=run_timestamp,
+            source=context.config.data.primary_provider,
+        )
+
+        if self.dry_run:
+            logging.info("Dry run enabled. Skipping history and report writes.")
+        else:
+            self._store_history(context, history)
+
+        market_state = self._build_market_state(context, prices)
+        portfolio_state = self._build_portfolio_state(
+            context,
+            market_state.technical.ticker,
+        )
+        decision_input = DecisionInput(
+            basket=market_state.basket,
+            technical=market_state.technical,
+            position=portfolio_state.to_position(),
+        )
+        decision = DecisionEngine(context.config.decision).decide(decision_input)
+        presentation = build_presentation_context(
+            decision=decision,
+            basket=market_state.basket,
+            technical=market_state.technical,
+            portfolio=portfolio_state.to_position(),
+        )
+
+        if not self.dry_run:
+            paths = generate_presentation_outputs(
+                presentation,
+                context.output_dir,
+            )
+            logging.info("Latest signal written to %s", paths.latest_signal)
+            logging.info("Excel dashboard written to %s", paths.excel_dashboard)
+            logging.info("HTML dashboard written to %s", paths.html_dashboard)
+
+        logging.info("Recommendation: %s", decision.recommendation)
+        logging.info("Market mode: %s", decision.market_mode.value)
+        logging.info("Confidence: %s", decision.confidence)
+
+    def _fetch_market_data(self, context: RunContext):
         request = MarketDataRequest(
             tickers=context.config.data.required_tickers,
             lookback_days=context.config.data.lookback_days,
@@ -89,19 +171,15 @@ class AiosRunner:
             context.config.data.primary_provider,
             csv_path=context.config.data.csv_path,
         )
-
         logging.info(
             "Fetching market data from %s for %s tickers.",
             provider.source_name,
             len(request.tickers),
         )
-        prices = provider.fetch(request)
-        history = prepare_history_frame(
-            prices=prices,
-            run_id=run_id,
-            run_timestamp=run_timestamp,
-            source=provider.source_name,
-        )
+        return provider.fetch(request)
+
+    @staticmethod
+    def _store_history(context: RunContext, history) -> None:
         history_path = context.output_dir / "history.csv"
         stored = upsert_csv(
             path=history_path,
@@ -112,4 +190,59 @@ class AiosRunner:
             "Market history written to %s with %s rows.",
             history_path,
             len(stored),
+        )
+
+    def _build_market_state(self, context: RunContext, prices) -> MarketState:
+        if prices.empty:
+            raise ValueError("No market data available for orchestration.")
+
+        basket_metrics = calculate_basket_metrics(
+            prices=prices,
+            ai_tickers=list(context.config.baskets.ai.keys()),
+            hbm_weights=context.config.baskets.hbm,
+        )
+        if basket_metrics.empty:
+            raise ValueError("Basket metrics are empty.")
+
+        technicals = add_technical_indicators(
+            prices,
+            ma_windows=context.config.indicators.moving_averages,
+            ema_windows=context.config.indicators.moving_averages,
+            rsi_period=context.config.indicators.rsi_period,
+            atr_period=context.config.indicators.atr_period,
+            adx_period=context.config.indicators.adx_period,
+            bollinger_period=context.config.indicators.bollinger_period,
+            bollinger_std=context.config.indicators.bollinger_std,
+        )
+        target_ticker = self._select_primary_ticker(context, technicals)
+        ticker_technicals = technicals[technicals["ticker"] == target_ticker]
+        if ticker_technicals.empty:
+            raise ValueError(f"No technical indicators available for {target_ticker}.")
+
+        return MarketState(
+            basket=BasketSnapshot.from_row(basket_metrics.iloc[-1]),
+            technical=TechnicalSnapshot.from_row(ticker_technicals.iloc[-1]),
+        )
+
+    @staticmethod
+    def _select_primary_ticker(context: RunContext, technicals) -> str:
+        available = set(technicals["ticker"].astype(str).unique())
+        for ticker in context.portfolio.positions:
+            if ticker in available:
+                return ticker
+        for ticker in context.config.data.required_tickers:
+            if ticker in available:
+                return ticker
+        raise ValueError("No ticker with technical indicators is available.")
+
+    @staticmethod
+    def _build_portfolio_state(
+        context: RunContext,
+        primary_ticker: str,
+    ) -> PortfolioState:
+        position = context.portfolio.positions.get(primary_ticker)
+        current_shares = int(round(position.shares)) if position else 0
+        return PortfolioState(
+            primary_ticker=primary_ticker,
+            current_shares=current_shares,
         )

@@ -49,9 +49,11 @@ def calculate_basket_metrics(
     ).reset_index(drop=True)
 
     for horizon in [1, 5, 20]:
-        metrics[f"AI_{horizon}D"] = metrics["AI_Basket"].pct_change(horizon) * 100
+        metrics[f"AI_{horizon}D"] = (
+            metrics["AI_Basket"].pct_change(horizon, fill_method=None) * 100
+        )
         metrics[f"HBM_{horizon}D"] = (
-            metrics["HBM_Basket"].pct_change(horizon) * 100
+            metrics["HBM_Basket"].pct_change(horizon, fill_method=None) * 100
         )
 
     metrics["D5"] = metrics["HBM_5D"] - metrics["AI_5D"]

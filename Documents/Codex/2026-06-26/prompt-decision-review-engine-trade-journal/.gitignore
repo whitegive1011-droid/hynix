@@ -4,5 +4,7 @@ __pycache__/
 .venv/
 outputs/execution.log
 outputs/*.tmp
+reports/
+work/
 data/raw/
 data/processed/
