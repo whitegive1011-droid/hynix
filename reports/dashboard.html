@@ -215,11 +215,11 @@
       <div class="grid">
         <section>
           <h2>Today's Recommendation</h2>
-          <p class="recommendation">Uncertain</p>
+          <p class="recommendation">Proxy-Based Watch</p>
           <div class="metrics">
             <div class="metric">
               <span>Confidence</span>
-              <strong>38</strong>
+              <strong>58</strong>
             </div>
             <div class="metric">
               <span>Risk Level</span>
@@ -286,9 +286,13 @@
             
             <li>Market classified as Mixed.</li>
             
-            <li>Data quality is insufficient for a reliable basket decision.</li>
+            <li>Official equity data is incomplete.</li>
             
-            <li>Missing required market data: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX</li>
+            <li>Tradable proxy data is used for intraday risk assessment only.</li>
+            
+            <li>Proxy data is not official equity market data.</li>
+            
+            <li>Proxy intraday risk level is Neutral.</li>
             
           </ul>
         </section>
@@ -299,11 +303,11 @@
         <h2>Data Quality Warnings</h2>
         <ul>
           
-          <li>Fallback market data provider was used; review recommendation confidence.</li>
-          
           <li>Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX</li>
           
           <li>Recommendation is degraded because data quality is below the target.</li>
+          
+          <li>Tradable proxy price is not official equity market data.</li>
           
           <li>Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20</li>
           
@@ -320,12 +324,12 @@
           
           <div class="indicator">
             <span class="label">7709.HK</span>
-            <span class="value">csv</span>
+            <span class="value">unknown</span>
           </div>
           
           <div class="indicator">
             <span class="label">NVDA</span>
-            <span class="value">csv</span>
+            <span class="value">unknown</span>
           </div>
           
         </div>
@@ -337,39 +341,39 @@
         <div class="indicator-list">
           <div class="indicator">
             <span class="label">Proxy Provider Used</span>
-            <span class="value">none</span>
+            <span class="value">binance</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy Tickers Covered</span>
-            <span class="value">None</span>
+            <span class="value">000660.KS, 005930.KS, AAPL, AMZN, GOOGL, META, MSFT, MU, NVDA, TSLA</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy Symbols Used</span>
             <span class="value">
               
-              None
+              000660.KS: SKHYNIXUSDT, 005930.KS: SAMSUNGUSDT, AAPL: AAPLUSDT, AMZN: AMZNUSDT, GOOGL: GOOGLUSDT, META: METAUSDT, MSFT: MSFTUSDT, MU: MUUSDT, NVDA: NVDAUSDT, TSLA: TSLAUSDT
               
             </span>
           </div>
           <div class="indicator">
             <span class="label">Proxy AI Change</span>
-            <span class="value">N/A</span>
+            <span class="value">2.172</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy HBM Change</span>
-            <span class="value">N/A</span>
+            <span class="value">0.1542</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy Risk Level</span>
-            <span class="value">N/A</span>
+            <span class="value">Neutral</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy Data Quality</span>
-            <span class="value">Missing</span>
+            <span class="value">OK</span>
           </div>
           <div class="indicator">
             <span class="label">Decision Influenced</span>
-            <span class="value">False</span>
+            <span class="value">True</span>
           </div>
           <div class="indicator">
             <span class="label">Warning</span>
