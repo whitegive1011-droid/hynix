@@ -1,15 +1,15 @@
 AIOS Deployment Summary
 =======================
-Execution Time: 8.78s
+Execution Time: 7.38s
 Provider Used: csv
 Data Source: csv
 Data Quality: Degraded
-Data Quality Score: 12
-Last Update: 2026-06-26
+Data Quality Score: 83
+Last Update: 2026-06-27
 Fallback Used: True
-Missing Tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX
+Missing Tickers: META
 Stale Tickers: None
-Cache Coverage: 14.29%
+Cache Coverage: 92.86%
 Recommendation Degraded: True
 Test Result: passed
 Deployment Status: generated
