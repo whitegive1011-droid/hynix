@@ -9,6 +9,8 @@ from typing import Any
 
 import pandas as pd
 
+from aios.proxy.models import ProxySignalSnapshot
+
 
 class MarketMode(str, Enum):
     UPTREND = "Uptrend"
@@ -111,6 +113,9 @@ class DecisionInput:
     technical: TechnicalSnapshot
     position: PortfolioPosition
     data_quality: DecisionDataQuality = field(default_factory=DecisionDataQuality)
+    proxy_signal: ProxySignalSnapshot = field(
+        default_factory=ProxySignalSnapshot.empty
+    )
 
 
 @dataclass(frozen=True)
@@ -125,6 +130,7 @@ class DecisionResult:
     suggested_position: int
     position_delta: int
     triggered_rules: list[str] = field(default_factory=list)
+    proxy_influenced: bool = False
 
 
 def _get(row: pd.Series | dict[str, Any], key: str) -> Any:

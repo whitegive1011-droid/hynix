@@ -18,6 +18,14 @@ def test_load_default_config_file() -> None:
     assert config.data_quality.confidence_penalty["failed"] == 50
     assert config.baskets.hbm["000660.KS"] == 0.5
     assert config.review.forward_return_days == [1, 5, 20]
+    assert config.proxy.enabled is True
+    assert config.proxy.provider_priority == ["okx", "binance"]
+    assert config.proxy.symbols["NVDA"] == ""
+    assert config.proxy.allow_proxy_for_intraday_signal is True
+    assert config.proxy.allow_proxy_for_core_metrics is False
+    assert config.proxy.max_confidence_when_proxy_only == 65
+    assert config.proxy.max_confidence_when_proxy_conflict == 55
+    assert config.proxy.write_proxy_to_official_cache is False
 
 
 def test_load_default_portfolio_file() -> None:

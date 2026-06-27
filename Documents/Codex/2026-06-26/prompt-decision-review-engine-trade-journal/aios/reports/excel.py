@@ -34,10 +34,12 @@ def write_investment_dashboard(
     dashboard.title = "Dashboard"
     indicators = workbook.create_sheet("Key Indicators")
     reasons = workbook.create_sheet("Reasons")
+    proxy = workbook.create_sheet("Proxy Signal")
 
     _render_dashboard_sheet(dashboard, context)
     _render_indicators_sheet(indicators, context)
     _render_reasons_sheet(reasons, context)
+    _render_proxy_sheet(proxy, context)
 
     workbook.save(path)
     return path
@@ -68,6 +70,13 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
         ("Data Quality Score", context.metadata.data_quality_score),
         ("Cache Coverage %", context.metadata.cache_coverage_percentage),
         ("Recommendation Degraded", context.metadata.recommendation_degraded),
+        (
+            "Decision Influenced By Proxy",
+            "Yes" if context.decision.proxy_influenced else "No",
+        ),
+        ("Proxy Provider Used", context.proxy_signal.provider_used),
+        ("Proxy Risk Level", context.proxy_signal.proxy_risk_level),
+        ("Proxy Data Quality", context.proxy_signal.proxy_data_quality),
         ("Today's Recommendation", decision.recommendation),
         ("Confidence", decision.confidence),
         ("Risk Level", decision.risk_level.value),
@@ -124,6 +133,41 @@ def _render_reasons_sheet(sheet, context: PresentationContext) -> None:
         for warning in context.data_warnings:
             sheet.append(["Warning", warning])
 
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
+    _style_table_sheet(sheet)
+    for row in range(2, sheet.max_row + 1):
+        sheet.cell(row=row, column=2).alignment = Alignment(wrap_text=True)
+
+
+def _render_proxy_sheet(sheet, context: PresentationContext) -> None:
+    proxy = context.proxy_signal
+    rows = [
+        ("Available", "Yes" if proxy.available else "No"),
+        ("Provider Used", proxy.provider_used),
+        ("Tickers Covered", ", ".join(proxy.tickers_covered) or "None"),
+        (
+            "Symbols Used",
+            ", ".join(
+                f"{ticker}: {symbol}"
+                for ticker, symbol in proxy.symbols_used.items()
+            )
+            or "None",
+        ),
+        ("Proxy AI Change", proxy.proxy_ai_1d_change),
+        ("Proxy HBM Change", proxy.proxy_hbm_1d_change),
+        ("Proxy Risk Level", proxy.proxy_risk_level),
+        ("Proxy Data Quality", proxy.proxy_data_quality),
+        ("Official Conflict", "Yes" if proxy.proxy_official_conflict_flag else "No"),
+        (
+            "Decision Influenced",
+            "Yes" if proxy.decision_influenced else "No",
+        ),
+        ("Warning", proxy.warning),
+    ]
+    sheet.append(["Field", "Value"])
+    for row in rows:
+        sheet.append(list(row))
     sheet.freeze_panes = "A2"
     sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
     _style_table_sheet(sheet)

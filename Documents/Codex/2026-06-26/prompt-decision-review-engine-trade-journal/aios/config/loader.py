@@ -23,6 +23,7 @@ from aios.config.models import (
     DecisionConfig,
     IndicatorsConfig,
     PortfolioConfig,
+    ProxyConfig,
     ReportsConfig,
     ReviewConfig,
 )
@@ -43,6 +44,7 @@ def load_config(path: str | Path = "config.yaml") -> AiosConfig:
         review=ReviewConfig.from_mapping(data.get("review", {})),
         coach=CoachConfig.from_mapping(data.get("coach", {})),
         reports=ReportsConfig.from_mapping(data.get("reports", {})),
+        proxy=ProxyConfig.from_mapping(data.get("proxy", {})),
     )
 
 

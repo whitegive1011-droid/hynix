@@ -14,6 +14,7 @@ from aios.decision.models import (
     TechnicalSnapshot,
 )
 from aios.app.models import RunMetadata
+from aios.proxy.models import ProxySignalSnapshot
 
 
 @dataclass(frozen=True)
@@ -36,6 +37,9 @@ class PresentationContext:
     technical: TechnicalSnapshot
     portfolio: PortfolioPosition
     metadata: RunMetadata
+    proxy_signal: ProxySignalSnapshot = field(
+        default_factory=ProxySignalSnapshot.empty
+    )
     key_indicators: list[KeyIndicator] = field(default_factory=list)
 
     @property
@@ -64,6 +68,7 @@ def build_presentation_context(
     technical: TechnicalSnapshot,
     portfolio: PortfolioPosition,
     metadata: RunMetadata | None = None,
+    proxy_signal: ProxySignalSnapshot | None = None,
 ) -> PresentationContext:
     """Assemble already-computed values for rendering."""
 
@@ -91,6 +96,7 @@ def build_presentation_context(
         technical=technical,
         portfolio=portfolio,
         metadata=metadata,
+        proxy_signal=proxy_signal or ProxySignalSnapshot.empty(),
         key_indicators=key_indicators,
     )
 
@@ -129,6 +135,8 @@ def context_to_dict(context: PresentationContext) -> dict[str, Any]:
         "latest_manual_input_date": context.metadata.latest_manual_input_date,
         "manual_tickers_used": context.metadata.manual_tickers_used,
         "manual_source": context.metadata.manual_source,
+        "decision_influenced_by_proxy": decision.proxy_influenced,
+        "proxy_intraday_signal": _proxy_signal_to_dict(context.proxy_signal),
         "data_warnings": context.data_warnings,
         "key_indicators": [
             {
@@ -197,6 +205,12 @@ def _build_data_warnings(context: PresentationContext) -> list[str]:
             f"{context.metadata.manual_source} on "
             f"{context.metadata.latest_manual_input_date}."
         )
+    if context.proxy_signal.available:
+        warnings.append(context.proxy_signal.warning)
+        if context.proxy_signal.proxy_official_conflict_flag:
+            warnings.append(
+                "Proxy signal conflicts with official market data."
+            )
 
     unavailable_indicators = [
         indicator.label
@@ -209,3 +223,7 @@ def _build_data_warnings(context: PresentationContext) -> list[str]:
             + ", ".join(unavailable_indicators)
         )
     return warnings
+
+
+def _proxy_signal_to_dict(proxy_signal: ProxySignalSnapshot) -> dict[str, Any]:
+    return proxy_signal.to_dict()

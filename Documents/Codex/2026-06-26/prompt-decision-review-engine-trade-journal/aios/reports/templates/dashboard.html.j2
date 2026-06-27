@@ -330,6 +330,54 @@
       {% endif %}
 
       <section style="margin-top: 16px;">
+        <h2>Proxy Intraday Market Signal</h2>
+        <div class="indicator-list">
+          <div class="indicator">
+            <span class="label">Proxy Provider Used</span>
+            <span class="value">{{ signal.proxy_intraday_signal.provider_used }}</span>
+          </div>
+          <div class="indicator">
+            <span class="label">Proxy Tickers Covered</span>
+            <span class="value">{{ signal.proxy_intraday_signal.tickers_covered | join(", ") if signal.proxy_intraday_signal.tickers_covered else "None" }}</span>
+          </div>
+          <div class="indicator">
+            <span class="label">Proxy Symbols Used</span>
+            <span class="value">
+              {% if signal.proxy_intraday_signal.symbols_used %}
+              {% for ticker, symbol in signal.proxy_intraday_signal.symbols_used.items() %}{{ ticker }}: {{ symbol }}{% if not loop.last %}, {% endif %}{% endfor %}
+              {% else %}
+              None
+              {% endif %}
+            </span>
+          </div>
+          <div class="indicator">
+            <span class="label">Proxy AI Change</span>
+            <span class="value">{{ signal.proxy_intraday_signal.proxy_ai_1d_change if signal.proxy_intraday_signal.proxy_ai_1d_change is not none else "N/A" }}</span>
+          </div>
+          <div class="indicator">
+            <span class="label">Proxy HBM Change</span>
+            <span class="value">{{ signal.proxy_intraday_signal.proxy_hbm_1d_change if signal.proxy_intraday_signal.proxy_hbm_1d_change is not none else "N/A" }}</span>
+          </div>
+          <div class="indicator">
+            <span class="label">Proxy Risk Level</span>
+            <span class="value">{{ signal.proxy_intraday_signal.proxy_risk_level }}</span>
+          </div>
+          <div class="indicator">
+            <span class="label">Proxy Data Quality</span>
+            <span class="value">{{ signal.proxy_intraday_signal.proxy_data_quality }}</span>
+          </div>
+          <div class="indicator">
+            <span class="label">Decision Influenced</span>
+            <span class="value">{{ signal.proxy_intraday_signal.decision_influenced }}</span>
+          </div>
+          <div class="indicator">
+            <span class="label">Warning</span>
+            <span class="value">{{ signal.proxy_intraday_signal.warning }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: 16px;">
         <h2>Key Indicators</h2>
         <div class="indicator-list">
           {% for indicator in signal.key_indicators %}
