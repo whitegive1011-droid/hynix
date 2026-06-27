@@ -20,6 +20,10 @@ from aios.proxy.models import (
 )
 
 
+BINANCE_FUTURES_TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/24hr"
+BINANCE_SPOT_TICKER_URL = "https://api.binance.com/api/v3/ticker/24hr"
+
+
 class ProxyPriceProvider(Protocol):
     source_name: str
 
@@ -126,8 +130,25 @@ class BinanceProxyPriceProvider:
         return normalize_proxy_frame(pd.DataFrame(rows))
 
     def _download(self, symbol: str) -> dict:
+        last_error: Exception | None = None
+        for market_type, base_url in [
+            ("USD-M futures", BINANCE_FUTURES_TICKER_URL),
+            ("spot", BINANCE_SPOT_TICKER_URL),
+        ]:
+            try:
+                payload = self._download_from_url(base_url, symbol)
+            except Exception as exc:
+                last_error = exc
+                continue
+            payload["_aios_market_type"] = market_type
+            return payload
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError(f"No Binance endpoint configured for {symbol}.")
+
+    def _download_from_url(self, base_url: str, symbol: str) -> dict:
         query = urllib.parse.urlencode({"symbol": symbol})
-        url = f"https://api.binance.com/api/v3/ticker/24hr?{query}"
+        url = f"{base_url}?{query}"
         with urllib.request.urlopen(url, timeout=self.timeout_seconds) as response:
             return json.loads(response.read().decode("utf-8"))
 
@@ -220,12 +241,13 @@ def _binance_payload_to_row(
     if price is None or price <= 0:
         return None
     timestamp = _timestamp_from_millis(payload.get("closeTime"))
+    market_type = str(payload.get("_aios_market_type", "public"))
     return _proxy_row(
         ticker=ticker,
         symbol=symbol,
         price=price,
         change_pct=_to_float(payload.get("priceChangePercent")),
-        source="Binance public 24hr ticker",
+        source=f"Binance public {market_type} 24hr ticker",
         provider="binance",
         timestamp=timestamp,
         session=session,

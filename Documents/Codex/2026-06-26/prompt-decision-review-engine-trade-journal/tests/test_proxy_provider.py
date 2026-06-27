@@ -9,6 +9,8 @@ import pandas as pd
 from aios.data.models import PRICE_COLUMNS
 from aios.proxy.models import PROXY_PRICE_COLUMNS, PROXY_WARNING, ProxyPriceRequest
 from aios.proxy.providers import (
+    BINANCE_FUTURES_TICKER_URL,
+    BinanceProxyPriceProvider,
     FixtureProxyPriceProvider,
     TradableProxyPriceProvider,
 )
@@ -49,6 +51,53 @@ def test_proxy_provider_merges_partial_results_by_priority() -> None:
     assert provider_by_ticker["NVDA"] == "okx"
     assert provider_by_ticker["MU"] == "binance"
     assert result.duplicated(["date", "ticker"]).sum() == 0
+
+
+def test_binance_proxy_provider_uses_usd_m_futures_endpoint_first(
+    monkeypatch,
+) -> None:
+    requested_urls: list[str] = []
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        @staticmethod
+        def read() -> bytes:
+            return json.dumps(
+                {
+                    "symbol": "AAPLUSDT",
+                    "lastPrice": "281.21",
+                    "priceChangePercent": "1.597",
+                    "closeTime": 1782525600000,
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(url, timeout):
+        requested_urls.append(url)
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "aios.proxy.providers.urllib.request.urlopen",
+        fake_urlopen,
+    )
+
+    result = BinanceProxyPriceProvider(timeout_seconds=1).fetch(
+        ProxyPriceRequest(
+            symbols={"AAPL": "AAPLUSDT"},
+            provider_priority=["binance"],
+        )
+    )
+
+    assert requested_urls
+    assert requested_urls[0].startswith(BINANCE_FUTURES_TICKER_URL)
+    assert result["ticker"].iloc[0] == "AAPL"
+    assert result["proxy_symbol"].iloc[0] == "AAPLUSDT"
+    assert result["provider"].iloc[0] == "binance"
+    assert result["source"].iloc[0] == "Binance public USD-M futures 24hr ticker"
 
 
 def test_proxy_prices_are_stored_separately_and_do_not_enter_official_cache(
