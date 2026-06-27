@@ -317,21 +317,72 @@ class AiosRunner:
         return prices, metadata
 
     def _fetch_proxy_prices(self, context: RunContext) -> pd.DataFrame:
+        stored_prices = self._stored_proxy_prices(context)
         if not context.config.proxy.enabled:
-            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+            return stored_prices
         symbols = {
             ticker: symbol
             for ticker, symbol in context.config.proxy.symbols.items()
             if str(symbol).strip()
         }
         if not symbols:
-            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+            return stored_prices
         provider = create_tradable_proxy_price_provider(context.config.proxy)
         request = ProxyPriceRequest(
             symbols=symbols,
             provider_priority=context.config.proxy.provider_priority,
         )
-        return provider.fetch(request)
+        fetched_prices = provider.fetch(request)
+        return self._merge_proxy_frames(stored_prices, fetched_prices)
+
+    @staticmethod
+    def _stored_proxy_prices(context: RunContext) -> pd.DataFrame:
+        proxy_path = context.config.proxy.output_path
+        if not proxy_path.exists():
+            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+        try:
+            frame = pd.read_csv(proxy_path)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logging.warning("Could not read proxy cache %s: %s", proxy_path, exc)
+            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+        if frame.empty:
+            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+        for column in PROXY_PRICE_COLUMNS:
+            if column not in frame.columns:
+                logging.warning(
+                    "Proxy cache %s is missing column %s.",
+                    proxy_path,
+                    column,
+                )
+                return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+        return frame[PROXY_PRICE_COLUMNS]
+
+    @staticmethod
+    def _merge_proxy_frames(
+        stored_prices: pd.DataFrame,
+        fetched_prices: pd.DataFrame,
+    ) -> pd.DataFrame:
+        frames = [
+            frame
+            for frame in [stored_prices, fetched_prices]
+            if frame is not None and not frame.empty
+        ]
+        if not frames:
+            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+        combined = pd.concat(frames, ignore_index=True)
+        combined["timestamp_sort"] = pd.to_datetime(
+            combined["timestamp"],
+            errors="coerce",
+        )
+        combined = combined.sort_values(
+            ["ticker", "timestamp_sort"],
+            na_position="first",
+        )
+        return (
+            combined[PROXY_PRICE_COLUMNS]
+            .drop_duplicates(subset=["date", "ticker", "provider"], keep="last")
+            .reset_index(drop=True)
+        )
 
     @staticmethod
     def _build_proxy_signal(

@@ -148,6 +148,93 @@ def test_import_issue_command_regenerates_reports_with_manual_metadata(
     assert (paths["reports"] / "investment_dashboard.xlsx").exists()
 
 
+def test_import_issue_proxy_rows_feed_proxy_signal_without_official_cache(
+    tmp_path: Path,
+) -> None:
+    paths = _write_issue_import_files(tmp_path)
+    _write_cache_fixture(paths["cache"], latest_offset=24)
+    paths["config"].write_text(
+        f"""
+app:
+  output_dir: {paths["reports"]}
+  log_level: INFO
+data:
+  primary_provider: csv
+  csv_path: {paths["cache"]}
+  lookback_days: 60
+  required_tickers:
+    - AAPL
+    - MSFT
+    - TSLA
+    - MU
+baskets:
+  ai:
+    AAPL: 0.3333
+    MSFT: 0.3333
+    TSLA: 0.3334
+  hbm:
+    MU: 1.0
+proxy:
+  enabled: false
+  symbols:
+    NVDA: NVDAUSDT
+    AAPL: AAPLUSDT
+    MSFT: MSFTUSDT
+    TSLA: TSLAUSDT
+    MU: MUUSDT
+  output_path: {paths["proxy"]}
+coach:
+  interactive_input: false
+""",
+        encoding="utf-8",
+    )
+    paths["issue"].write_text(
+        _issue_body(
+            "date,ticker,close,change_pct,market_cap,source,note\n"
+            "2026-01-26,NVDA,193.69,-0.06,,binance_proxy,\"NVDAUSDT proxy\"\n"
+            "2026-01-26,AAPL,281.38,1.88,,binance_proxy,\"AAPLUSDT proxy\"\n"
+            "2026-01-26,MSFT,374.68,4.99,,binance_proxy,\"MSFTUSDT proxy\"\n"
+            "2026-01-26,TSLA,380.47,2.41,,binance_proxy,\"TSLAUSDT proxy\"\n"
+            "2026-01-26,MU,1138.19,-1.55,,binance_proxy,\"MUUSDT proxy\"",
+            trading_date="2026-01-26",
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "import-issue",
+            "--config",
+            str(paths["config"]),
+            "--portfolio",
+            str(paths["portfolio"]),
+            "--issue-body-file",
+            str(paths["issue"]),
+            "--manual-output",
+            str(paths["manual"]),
+            "--cache-output",
+            str(paths["cache"]),
+            "--output-dir",
+            str(paths["reports"]),
+            "--no-input",
+        ]
+    ) == 0
+
+    cache = pd.read_csv(paths["cache"])
+    proxy_cache = pd.read_csv(paths["proxy"])
+    signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
+
+    assert {"NVDA", "AAPL", "MSFT", "TSLA", "MU"}.isdisjoint(
+        set(cache["ticker"])
+    )
+    assert set(proxy_cache["ticker"]) == {"NVDA", "AAPL", "MSFT", "TSLA", "MU"}
+    assert signal["proxy_intraday_signal"]["available"] is True
+    assert signal["proxy_intraday_signal"]["provider_used"] == "binance_proxy"
+    assert signal["proxy_intraday_signal"]["proxy_data_quality"] == "OK"
+    assert signal["proxy_intraday_signal"]["proxy_ai_1d_change"] is not None
+    assert signal["proxy_intraday_signal"]["proxy_hbm_1d_change"] is not None
+
+
 def test_missing_required_ticker_warning_is_non_fatal() -> None:
     parsed = parse_manual_price_issue(
         _issue_body(
@@ -210,6 +297,15 @@ baskets:
     AI1: 1.0
   hbm:
     HBM1: 1.0
+proxy:
+  enabled: false
+  symbols:
+    NVDA: NVDAUSDT
+    AAPL: AAPLUSDT
+    MSFT: MSFTUSDT
+    TSLA: TSLAUSDT
+    MU: MUUSDT
+  output_path: {data_dir / "proxy" / "tradable_proxy_prices.csv"}
 coach:
   interactive_input: false
 """,
@@ -232,6 +328,7 @@ cash:
         "portfolio": portfolio_path,
         "cache": cache_path,
         "manual": manual_path,
+        "proxy": data_dir / "proxy" / "tradable_proxy_prices.csv",
         "reports": reports_dir,
         "issue": issue_path,
     }
