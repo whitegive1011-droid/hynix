@@ -394,3 +394,40 @@
 2026-06-27 03:42:16,658 INFO root Market mode: Mixed
 2026-06-27 03:42:16,658 INFO root Confidence: 38
 2026-06-27 03:42:16,658 INFO root AIOS run completed.
+2026-06-27 04:59:34,055 INFO root AIOS run started.
+2026-06-27 04:59:34,055 INFO root Config loaded from config.yaml
+2026-06-27 04:59:34,055 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 04:59:34,055 INFO root Output directory: reports
+2026-06-27 04:59:34,055 INFO root Run mode: daily
+2026-06-27 04:59:34,055 INFO root Interactive input: False
+2026-06-27 04:59:34,055 INFO root Required tickers configured: 14
+2026-06-27 04:59:34,055 INFO root Portfolio positions configured: 2
+2026-06-27 04:59:34,056 INFO root Fetching market data from multi-source provider for 14 tickers.
+2026-06-27 04:59:35,309 WARNING root Provider yfinance failed: "['date'] not in index"
+2026-06-27 04:59:35,309 INFO root Stooq does not support ticker mapping for 7709.HK
+2026-06-27 04:59:35,309 INFO root Stooq does not support ticker mapping for 7747.HK
+2026-06-27 04:59:35,309 INFO root Stooq does not support ticker mapping for 000660.KS
+2026-06-27 04:59:35,309 INFO root Stooq does not support ticker mapping for 005930.KS
+2026-06-27 04:59:35,961 WARNING root Stooq fetch failed for MU: HTTP Error 404: Not Found
+2026-06-27 04:59:36,461 WARNING root Stooq fetch failed for NVDA: HTTP Error 404: Not Found
+2026-06-27 04:59:37,099 WARNING root Stooq fetch failed for MSFT: HTTP Error 404: Not Found
+2026-06-27 04:59:37,747 WARNING root Stooq fetch failed for GOOGL: HTTP Error 404: Not Found
+2026-06-27 04:59:38,224 WARNING root Stooq fetch failed for AMZN: HTTP Error 404: Not Found
+2026-06-27 04:59:38,889 WARNING root Stooq fetch failed for META: HTTP Error 404: Not Found
+2026-06-27 04:59:39,391 WARNING root Stooq fetch failed for AAPL: HTTP Error 404: Not Found
+2026-06-27 04:59:40,054 WARNING root Stooq fetch failed for TSLA: HTTP Error 404: Not Found
+2026-06-27 04:59:40,537 WARNING root Stooq fetch failed for QQQ: HTTP Error 404: Not Found
+2026-06-27 04:59:41,018 WARNING root Stooq fetch failed for SOXX: HTTP Error 404: Not Found
+2026-06-27 04:59:41,020 INFO root Alpha Vantage provider disabled; API key is missing.
+2026-06-27 04:59:41,020 INFO root Finnhub provider disabled; API key is missing.
+2026-06-27 04:59:41,034 INFO root Provider used: csv
+2026-06-27 04:59:41,035 INFO root Data quality: Degraded
+2026-06-27 04:59:41,044 INFO root Market history written to reports/history.csv with 10 rows.
+2026-06-27 04:59:41,110 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 04:59:41,110 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 04:59:41,110 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 04:59:41,111 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 04:59:41,111 INFO root Recommendation: Uncertain
+2026-06-27 04:59:41,111 INFO root Market mode: Mixed
+2026-06-27 04:59:41,111 INFO root Confidence: 38
+2026-06-27 04:59:41,111 INFO root AIOS run completed.

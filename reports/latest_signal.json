@@ -9,12 +9,11 @@
   "position_delta": 0,
   "top_reasons": [
     "Market classified as Mixed.",
-    "Indicators do not align strongly enough for a directional mode.",
-    "Conflicting signals favor watching instead of adjusting.",
-    "Confidence is below the configured uncertainty threshold."
+    "Data quality is insufficient for a reliable basket decision.",
+    "Missing required market data: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX"
   ],
   "triggered_rules": [
-    "classification.mixed",
+    "data_quality.insufficient",
     "position.watch_uncertain"
   ],
   "relative_ratio": null,
@@ -40,9 +39,18 @@
     "QQQ",
     "SOXX"
   ],
+  "stale_tickers": [],
+  "provider_by_ticker": {
+    "7709.HK": "csv",
+    "NVDA": "csv"
+  },
+  "cache_coverage_percentage": 14.29,
+  "data_quality_score": 12,
+  "recommendation_degraded": true,
   "data_warnings": [
     "Fallback market data provider was used; review recommendation confidence.",
     "Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX",
+    "Recommendation is degraded because data quality is below the target.",
     "Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
   "key_indicators": [
