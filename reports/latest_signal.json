@@ -24,15 +24,15 @@
   "data_source": "csv",
   "provider_used": "csv",
   "last_update": "2026-06-28",
-  "data_quality": "OK",
-  "fallback_used": false,
+  "data_quality": "Fallback",
+  "fallback_used": true,
   "missing_tickers": [],
   "stale_tickers": [],
   "provider_by_ticker": {
     "000660.KS": "GitHub Issue",
     "005930.KS": "GitHub Issue",
-    "7709.HK": "unknown",
-    "7747.HK": "unknown",
+    "7709.HK": "csv",
+    "7747.HK": "csv",
     "AAPL": "GitHub Issue",
     "AMZN": "GitHub Issue",
     "GOOGL": "GitHub Issue",
@@ -79,6 +79,7 @@
     "decision_influenced": false
   },
   "data_warnings": [
+    "Fallback market data provider was used; review recommendation confidence.",
     "Manual mobile input was used from GitHub Issue on 2026-06-28.",
     "Unavailable indicators due to insufficient source data: Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
