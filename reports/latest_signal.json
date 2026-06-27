@@ -67,7 +67,7 @@
     "SOXX",
     "TSLA"
   ],
-  "manual_source": "GitHub Issue+GitHub Issue Proxy",
+  "manual_source": "GitHub Issue",
   "decision_influenced_by_proxy": true,
   "proxy_intraday_signal": {
     "available": true,
@@ -90,7 +90,7 @@
     "Fallback market data provider was used; review recommendation confidence.",
     "Missing market data for required tickers: META",
     "Recommendation is degraded because data quality is below the target.",
-    "Manual mobile input was used from GitHub Issue+GitHub Issue Proxy on 2026-06-27.",
+    "Manual mobile input was used from GitHub Issue on 2026-06-27.",
     "Tradable proxy price is not official equity market data.",
     "Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
