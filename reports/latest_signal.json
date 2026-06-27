@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-26",
+  "date": "2026-06-27",
   "recommendation": "Uncertain",
   "confidence": 38,
   "risk_level": "Low",
@@ -10,7 +10,7 @@
   "top_reasons": [
     "Market classified as Mixed.",
     "Data quality is insufficient for a reliable basket decision.",
-    "Missing required market data: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX"
+    "Missing required market data: 7747.HK, META, QQQ, SOXX"
   ],
   "triggered_rules": [
     "data_quality.insufficient",
@@ -22,35 +22,45 @@
   "risk_score_display": "N/A",
   "data_source": "csv",
   "provider_used": "csv",
-  "last_update": "2026-06-26",
+  "last_update": "2026-06-27",
   "data_quality": "Degraded",
-  "fallback_used": true,
+  "fallback_used": false,
   "missing_tickers": [
     "7747.HK",
-    "000660.KS",
-    "005930.KS",
-    "MU",
-    "MSFT",
-    "GOOGL",
-    "AMZN",
     "META",
-    "AAPL",
-    "TSLA",
     "QQQ",
     "SOXX"
   ],
   "stale_tickers": [],
   "provider_by_ticker": {
-    "7709.HK": "csv",
-    "NVDA": "csv"
+    "000660.KS": "GitHub Issue",
+    "005930.KS": "GitHub Issue",
+    "7709.HK": "unknown",
+    "AAPL": "GitHub Issue",
+    "AMZN": "GitHub Issue",
+    "GOOGL": "GitHub Issue",
+    "MSFT": "GitHub Issue",
+    "MU": "GitHub Issue",
+    "NVDA": "GitHub Issue",
+    "TSLA": "GitHub Issue"
   },
-  "cache_coverage_percentage": 14.29,
-  "data_quality_score": 12,
+  "cache_coverage_percentage": 71.43,
+  "data_quality_score": 64,
   "recommendation_degraded": true,
-  "manual_mobile_input_used": false,
-  "latest_manual_input_date": "N/A",
-  "manual_tickers_used": [],
-  "manual_source": "None",
+  "manual_mobile_input_used": true,
+  "latest_manual_input_date": "2026-06-27",
+  "manual_tickers_used": [
+    "000660.KS",
+    "005930.KS",
+    "AAPL",
+    "AMZN",
+    "GOOGL",
+    "MSFT",
+    "MU",
+    "NVDA",
+    "TSLA"
+  ],
+  "manual_source": "GitHub Issue",
   "decision_influenced_by_proxy": false,
   "proxy_intraday_signal": {
     "available": false,
@@ -66,9 +76,9 @@
     "decision_influenced": false
   },
   "data_warnings": [
-    "Fallback market data provider was used; review recommendation confidence.",
-    "Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX",
+    "Missing market data for required tickers: 7747.HK, META, QQQ, SOXX",
     "Recommendation is degraded because data quality is below the target.",
+    "Manual mobile input was used from GitHub Issue on 2026-06-27.",
     "Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
   "key_indicators": [
