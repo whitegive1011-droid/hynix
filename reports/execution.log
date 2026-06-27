@@ -154,3 +154,217 @@
 2026-06-27 03:17:56,424 INFO root Market mode: Mixed
 2026-06-27 03:17:56,424 INFO root Confidence: 38
 2026-06-27 03:17:56,424 INFO root AIOS run completed.
+2026-06-27 11:33:31,262 INFO root AIOS run started.
+2026-06-27 11:33:31,263 INFO root Config loaded from config.yaml
+2026-06-27 11:33:31,263 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 11:33:31,263 INFO root Output directory: reports
+2026-06-27 11:33:31,263 INFO root Run mode: daily
+2026-06-27 11:33:31,263 INFO root Interactive input: False
+2026-06-27 11:33:31,263 INFO root Required tickers configured: 14
+2026-06-27 11:33:31,263 INFO root Portfolio positions configured: 2
+2026-06-27 11:33:31,263 INFO root Fetching market data from yfinance for 14 tickers. Attempt 1/2.
+2026-06-27 11:33:33,751 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:33,751 ERROR yfinance ['7709.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:35,524 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:35,524 ERROR yfinance ['7747.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:36,884 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:36,885 ERROR yfinance ['000660.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:38,703 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:38,704 ERROR yfinance ['005930.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:40,035 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:40,035 ERROR yfinance ['MU']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:41,818 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:41,819 ERROR yfinance ['NVDA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:43,182 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:43,182 ERROR yfinance ['MSFT']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:44,991 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:44,992 ERROR yfinance ['GOOGL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:46,331 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:46,331 ERROR yfinance ['AMZN']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:48,113 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:48,114 ERROR yfinance ['META']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:49,470 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:49,470 ERROR yfinance ['AAPL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:51,276 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:51,277 ERROR yfinance ['TSLA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:52,621 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:52,621 ERROR yfinance ['QQQ']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:54,404 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:54,405 ERROR yfinance ['SOXX']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:55,420 INFO root Fetching market data from yfinance for 14 tickers. Attempt 2/2.
+2026-06-27 11:33:56,812 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:56,813 ERROR yfinance ['7709.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:58,592 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:58,593 ERROR yfinance ['7747.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:33:59,959 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:33:59,959 ERROR yfinance ['000660.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:01,749 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:01,749 ERROR yfinance ['005930.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:03,100 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:03,100 ERROR yfinance ['MU']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:04,884 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:04,885 ERROR yfinance ['NVDA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:06,247 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:06,247 ERROR yfinance ['MSFT']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:08,037 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:08,037 ERROR yfinance ['GOOGL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:09,392 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:09,392 ERROR yfinance ['AMZN']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:11,202 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:11,203 ERROR yfinance ['META']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:12,542 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:12,543 ERROR yfinance ['AAPL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:14,325 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:14,325 ERROR yfinance ['TSLA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:15,682 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:15,682 ERROR yfinance ['QQQ']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:17,783 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:34:17,783 ERROR yfinance ['SOXX']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:34:17,788 WARNING root Primary provider missing 14 tickers. Falling back to CSV cache: data/cache/market_cache.csv
+2026-06-27 11:34:17,788 INFO root Fetching market data from csv for 14 tickers. Attempt 1/1.
+2026-06-27 11:34:17,795 INFO root Provider used: csv
+2026-06-27 11:34:17,795 INFO root Data quality: Degraded
+2026-06-27 11:34:17,809 INFO root Market history written to reports/history.csv with 10 rows.
+2026-06-27 11:34:17,866 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 11:34:17,866 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 11:34:17,866 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 11:34:17,866 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 11:34:17,866 INFO root Recommendation: Uncertain
+2026-06-27 11:34:17,866 INFO root Market mode: Mixed
+2026-06-27 11:34:17,866 INFO root Confidence: 38
+2026-06-27 11:34:17,867 INFO root AIOS run completed.
+2026-06-27 11:35:01,472 INFO root AIOS run started.
+2026-06-27 11:35:01,472 INFO root Config loaded from config.yaml
+2026-06-27 11:35:01,472 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 11:35:01,472 INFO root Output directory: reports
+2026-06-27 11:35:01,472 INFO root Run mode: daily
+2026-06-27 11:35:01,472 INFO root Interactive input: False
+2026-06-27 11:35:01,472 INFO root Required tickers configured: 14
+2026-06-27 11:35:01,472 INFO root Portfolio positions configured: 2
+2026-06-27 11:35:01,473 INFO root Fetching market data from yfinance for 14 tickers. Attempt 1/2.
+2026-06-27 11:35:03,927 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:03,927 ERROR yfinance ['7709.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:06,132 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:06,132 ERROR yfinance ['7747.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:07,587 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:07,587 ERROR yfinance ['000660.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:09,398 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:09,399 ERROR yfinance ['005930.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:10,732 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:10,733 ERROR yfinance ['MU']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:12,515 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:12,515 ERROR yfinance ['NVDA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:13,880 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:13,880 ERROR yfinance ['MSFT']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:15,692 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:15,693 ERROR yfinance ['GOOGL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:17,025 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:17,025 ERROR yfinance ['AMZN']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:18,821 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:18,822 ERROR yfinance ['META']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:20,171 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:20,172 ERROR yfinance ['AAPL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:21,989 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:21,990 ERROR yfinance ['TSLA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:23,316 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:23,316 ERROR yfinance ['QQQ']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:25,096 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:25,096 ERROR yfinance ['SOXX']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:26,111 INFO root Fetching market data from yfinance for 14 tickers. Attempt 2/2.
+2026-06-27 11:35:27,509 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:27,509 ERROR yfinance ['7709.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:29,294 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:29,295 ERROR yfinance ['7747.HK']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:30,655 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:30,656 ERROR yfinance ['000660.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:32,463 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:32,464 ERROR yfinance ['005930.KS']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:33,801 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:33,801 ERROR yfinance ['MU']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:35,591 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:35,591 ERROR yfinance ['NVDA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:36,947 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:36,947 ERROR yfinance ['MSFT']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:38,745 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:38,747 ERROR yfinance ['GOOGL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:40,091 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:40,091 ERROR yfinance ['AMZN']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:41,877 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:41,877 ERROR yfinance ['META']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:43,237 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:43,237 ERROR yfinance ['AAPL']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:45,044 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:45,044 ERROR yfinance ['TSLA']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:46,385 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:46,385 ERROR yfinance ['QQQ']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:48,178 ERROR yfinance 
+1 Failed download:
+2026-06-27 11:35:48,179 ERROR yfinance ['SOXX']: YFRateLimitError('Too Many Requests. Rate limited. Try after a while.')
+2026-06-27 11:35:48,183 WARNING root Primary provider missing 14 tickers. Falling back to CSV cache: data/cache/market_cache.csv
+2026-06-27 11:35:48,184 INFO root Fetching market data from csv for 14 tickers. Attempt 1/1.
+2026-06-27 11:35:48,190 INFO root Provider used: csv
+2026-06-27 11:35:48,190 INFO root Data quality: Degraded
+2026-06-27 11:35:48,202 INFO root Market history written to reports/history.csv with 10 rows.
+2026-06-27 11:35:48,256 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 11:35:48,256 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 11:35:48,256 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 11:35:48,256 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 11:35:48,256 INFO root Recommendation: Uncertain
+2026-06-27 11:35:48,256 INFO root Market mode: Mixed
+2026-06-27 11:35:48,256 INFO root Confidence: 38
+2026-06-27 11:35:48,257 INFO root AIOS run completed.

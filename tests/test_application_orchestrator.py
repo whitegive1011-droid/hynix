@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 from openpyxl import load_workbook
 
-from aios.data.models import PRICE_COLUMNS
+from aios.data.models import MarketDataRequest, PRICE_COLUMNS
 from aios.data.providers import CsvMarketDataProvider
 from main import main
 
@@ -262,6 +262,93 @@ cash:
     assert "Falling back to CSV cache" in (output_dir / "execution.log").read_text(
         encoding="utf-8"
     )
+
+
+def test_main_merges_csv_cache_when_yahoo_returns_partial_data(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    csv_path = _write_orchestrator_fixture(tmp_path)
+    config_path = tmp_path / "config.yaml"
+    portfolio_path = tmp_path / "portfolio.yaml"
+    output_dir = tmp_path / "reports"
+
+    config_path.write_text(
+        f"""
+app:
+  output_dir: {output_dir}
+  log_level: INFO
+data:
+  primary_provider: yfinance
+  fallback_provider: csv
+  csv_path: {csv_path}
+  retry_attempts: 1
+  retry_delay_seconds: 0
+  lookback_days: 60
+  required_tickers:
+    - HBM1
+    - AI1
+baskets:
+  ai:
+    AI1: 1.0
+  hbm:
+    HBM1: 1.0
+coach:
+  interactive_input: false
+""",
+        encoding="utf-8",
+    )
+    portfolio_path.write_text(
+        """
+base_currency: HKD
+positions:
+  HBM1:
+    shares: 200
+    average_cost: 10
+cash:
+  HKD: 0
+""",
+        encoding="utf-8",
+    )
+
+    class PartialYFinanceProvider:
+        source_name = "yfinance"
+
+        def fetch(self, request):
+            return CsvMarketDataProvider(csv_path).fetch(
+                MarketDataRequest(tickers=["AI1"], lookback_days=request.lookback_days)
+            )
+
+    def fake_provider_factory(name, csv_path=None):
+        if name == "yfinance":
+            return PartialYFinanceProvider()
+        return CsvMarketDataProvider(csv_path)
+
+    monkeypatch.setattr(
+        "aios.app.runner.create_market_data_provider",
+        fake_provider_factory,
+    )
+
+    assert main(
+        [
+            "--config",
+            str(config_path),
+            "--portfolio",
+            str(portfolio_path),
+            "--provider",
+            "yfinance",
+            "--output-dir",
+            str(output_dir),
+            "--no-input",
+        ]
+    ) == 0
+
+    signal = json.loads((output_dir / "latest_signal.json").read_text())
+    assert signal["provider_used"] == "yfinance+csv"
+    assert signal["fallback_used"] is True
+    assert signal["missing_tickers"] == []
+    history = pd.read_csv(output_dir / "history.csv")
+    assert set(history["ticker"]) == {"HBM1", "AI1"}
 
 
 def _write_orchestrator_fixture(tmp_path: Path) -> Path:
