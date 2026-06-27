@@ -19,8 +19,10 @@ def test_load_default_config_file() -> None:
     assert config.baskets.hbm["000660.KS"] == 0.5
     assert config.review.forward_return_days == [1, 5, 20]
     assert config.proxy.enabled is True
-    assert config.proxy.provider_priority == ["okx", "binance"]
-    assert config.proxy.symbols["NVDA"] == ""
+    assert config.proxy.provider_priority == ["binance", "okx"]
+    assert config.proxy.symbols["NVDA"] == "NVDABUSDT"
+    assert config.proxy.symbols["MU"] == "MUBUSDT"
+    assert config.proxy.symbols["TSLA"] == "TSLABUSDT"
     assert config.proxy.allow_proxy_for_intraday_signal is True
     assert config.proxy.allow_proxy_for_core_metrics is False
     assert config.proxy.max_confidence_when_proxy_only == 65

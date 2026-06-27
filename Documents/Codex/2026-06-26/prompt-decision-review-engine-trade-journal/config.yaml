@@ -40,14 +40,14 @@ data_quality:
 proxy:
   enabled: true
   provider_priority:
-    - okx
     - binance
+    - okx
   symbols:
-    NVDA: ""
-    MU: ""
+    NVDA: "NVDABUSDT"
+    MU: "MUBUSDT"
     MSFT: ""
     AAPL: ""
-    TSLA: ""
+    TSLA: "TSLABUSDT"
   allow_proxy_for_intraday_signal: true
   allow_proxy_for_core_metrics: false
   max_confidence_when_proxy_only: 65
