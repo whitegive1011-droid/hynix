@@ -27,7 +27,7 @@
   "provider_used": "csv",
   "last_update": "2026-06-26",
   "data_quality": "Degraded",
-  "fallback_used": false,
+  "fallback_used": true,
   "missing_tickers": [
     "7747.HK",
     "000660.KS",
@@ -44,8 +44,8 @@
   ],
   "stale_tickers": [],
   "provider_by_ticker": {
-    "7709.HK": "unknown",
-    "NVDA": "unknown"
+    "7709.HK": "csv",
+    "NVDA": "csv"
   },
   "cache_coverage_percentage": 14.29,
   "data_quality_score": 12,
@@ -101,6 +101,7 @@
     "decision_influenced": true
   },
   "data_warnings": [
+    "Fallback market data provider was used; review recommendation confidence.",
     "Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX",
     "Recommendation is degraded because data quality is below the target.",
     "Manual mobile input was used from GitHub Issue Proxy on 2026-06-27.",
