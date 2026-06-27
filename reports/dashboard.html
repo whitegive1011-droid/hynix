@@ -204,7 +204,7 @@
       <header>
         <div>
           <h1>AIOS Daily Dashboard</h1>
-          <p class="date">2026-06-27</p>
+          <p class="date">2026-06-28</p>
         </div>
         <div class="metric">
           <span>Market Mode</span>
@@ -215,11 +215,11 @@
       <div class="grid">
         <section>
           <h2>Today's Recommendation</h2>
-          <p class="recommendation">Proxy-Based Watch</p>
+          <p class="recommendation">Uncertain</p>
           <div class="metrics">
             <div class="metric">
               <span>Confidence</span>
-              <strong>58</strong>
+              <strong>38</strong>
             </div>
             <div class="metric">
               <span>Risk Level</span>
@@ -255,27 +255,27 @@
             </div>
             <div class="metric">
               <span>Last Update</span>
-              <strong>2026-06-27</strong>
+              <strong>2026-06-28</strong>
             </div>
             <div class="metric">
               <span>Latest Manual Input</span>
-              <strong>2026-06-27</strong>
+              <strong>2026-06-28</strong>
             </div>
             <div class="metric">
               <span>Data Quality</span>
-              <strong class="quality">Degraded</strong>
+              <strong class="quality">OK</strong>
             </div>
             <div class="metric">
               <span>Data Quality Score</span>
-              <strong>83</strong>
+              <strong>90</strong>
             </div>
             <div class="metric">
               <span>Cache Coverage</span>
-              <strong>92.86%</strong>
+              <strong>100.0%</strong>
             </div>
             <div class="metric">
               <span>Degraded</span>
-              <strong>True</strong>
+              <strong>False</strong>
             </div>
           </div>
         </section>
@@ -286,13 +286,11 @@
             
             <li>Market classified as Mixed.</li>
             
-            <li>Official equity data is incomplete.</li>
+            <li>Indicators do not align strongly enough for a directional mode.</li>
             
-            <li>Tradable proxy data is used for intraday risk assessment only.</li>
+            <li>Conflicting signals favor watching instead of adjusting.</li>
             
-            <li>Proxy data is not official equity market data.</li>
-            
-            <li>Proxy intraday risk level is Neutral.</li>
+            <li>Confidence is below the configured uncertainty threshold.</li>
             
           </ul>
         </section>
@@ -303,17 +301,9 @@
         <h2>Data Quality Warnings</h2>
         <ul>
           
-          <li>Fallback market data provider was used; review recommendation confidence.</li>
+          <li>Manual mobile input was used from GitHub Issue on 2026-06-28.</li>
           
-          <li>Missing market data for required tickers: META</li>
-          
-          <li>Recommendation is degraded because data quality is below the target.</li>
-          
-          <li>Manual mobile input was used from GitHub Issue on 2026-06-27.</li>
-          
-          <li>Tradable proxy price is not official equity market data.</li>
-          
-          <li>Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20</li>
+          <li>Unavailable indicators due to insufficient source data: Risk Score, AI 5D Return, HBM 5D Return, D5, D20</li>
           
         </ul>
       </section>
@@ -335,16 +325,6 @@
           </div>
           
           <div class="indicator">
-            <span class="label">7709.HK</span>
-            <span class="value">GitHub Issue</span>
-          </div>
-          
-          <div class="indicator">
-            <span class="label">7747.HK</span>
-            <span class="value">GitHub Issue</span>
-          </div>
-          
-          <div class="indicator">
             <span class="label">AAPL</span>
             <span class="value">GitHub Issue</span>
           </div>
@@ -356,6 +336,11 @@
           
           <div class="indicator">
             <span class="label">GOOGL</span>
+            <span class="value">GitHub Issue</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">META</span>
             <span class="value">GitHub Issue</span>
           </div>
           
@@ -410,12 +395,12 @@
           
           <div class="indicator">
             <span class="label">7709.HK</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">unknown</span>
           </div>
           
           <div class="indicator">
             <span class="label">7747.HK</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">unknown</span>
           </div>
           
           <div class="indicator">
@@ -430,6 +415,11 @@
           
           <div class="indicator">
             <span class="label">GOOGL</span>
+            <span class="value">GitHub Issue</span>
+          </div>
+          
+          <div class="indicator">
+            <span class="label">META</span>
             <span class="value">GitHub Issue</span>
           </div>
           
@@ -472,23 +462,23 @@
         <div class="indicator-list">
           <div class="indicator">
             <span class="label">Proxy Provider Used</span>
-            <span class="value">binance</span>
+            <span class="value">none</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy Tickers Covered</span>
-            <span class="value">META</span>
+            <span class="value">None</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy Symbols Used</span>
             <span class="value">
               
-              META: METAUSDT
+              None
               
             </span>
           </div>
           <div class="indicator">
             <span class="label">Proxy AI Change</span>
-            <span class="value">1.532</span>
+            <span class="value">N/A</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy HBM Change</span>
@@ -496,15 +486,15 @@
           </div>
           <div class="indicator">
             <span class="label">Proxy Risk Level</span>
-            <span class="value">Neutral</span>
+            <span class="value">N/A</span>
           </div>
           <div class="indicator">
             <span class="label">Proxy Data Quality</span>
-            <span class="value">Partial</span>
+            <span class="value">Missing</span>
           </div>
           <div class="indicator">
             <span class="label">Decision Influenced</span>
-            <span class="value">True</span>
+            <span class="value">False</span>
           </div>
           <div class="indicator">
             <span class="label">Warning</span>
@@ -519,7 +509,7 @@
           
           <div class="indicator">
             <span class="label">Relative Ratio</span>
-            <span class="value">N/A</span>
+            <span class="value">0.500</span>
           </div>
           
           <div class="indicator">

@@ -1,7 +1,7 @@
 {
-  "date": "2026-06-27",
-  "recommendation": "Proxy-Based Watch",
-  "confidence": 58,
+  "date": "2026-06-28",
+  "recommendation": "Uncertain",
+  "confidence": 38,
   "risk_level": "Low",
   "market_mode": "Mixed",
   "suggested_position": 400,
@@ -9,37 +9,34 @@
   "position_delta": 0,
   "top_reasons": [
     "Market classified as Mixed.",
-    "Official equity data is incomplete.",
-    "Tradable proxy data is used for intraday risk assessment only.",
-    "Proxy data is not official equity market data.",
-    "Proxy intraday risk level is Neutral."
+    "Indicators do not align strongly enough for a directional mode.",
+    "Conflicting signals favor watching instead of adjusting.",
+    "Confidence is below the configured uncertainty threshold."
   ],
   "triggered_rules": [
-    "proxy.official_data_incomplete",
-    "proxy.intraday_signal",
-    "position.proxy_watch"
+    "classification.mixed",
+    "position.watch_uncertain"
   ],
-  "relative_ratio": null,
+  "relative_ratio": 0.4999343919862067,
   "risk_score": null,
-  "relative_ratio_display": "N/A",
+  "relative_ratio_display": "0.500",
   "risk_score_display": "N/A",
   "data_source": "csv",
   "provider_used": "csv",
-  "last_update": "2026-06-27",
-  "data_quality": "Degraded",
-  "fallback_used": true,
-  "missing_tickers": [
-    "META"
-  ],
+  "last_update": "2026-06-28",
+  "data_quality": "OK",
+  "fallback_used": false,
+  "missing_tickers": [],
   "stale_tickers": [],
   "provider_by_ticker": {
     "000660.KS": "GitHub Issue",
     "005930.KS": "GitHub Issue",
-    "7709.HK": "GitHub Issue",
-    "7747.HK": "GitHub Issue",
+    "7709.HK": "unknown",
+    "7747.HK": "unknown",
     "AAPL": "GitHub Issue",
     "AMZN": "GitHub Issue",
     "GOOGL": "GitHub Issue",
+    "META": "GitHub Issue",
     "MSFT": "GitHub Issue",
     "MU": "GitHub Issue",
     "NVDA": "GitHub Issue",
@@ -47,19 +44,18 @@
     "SOXX": "GitHub Issue",
     "TSLA": "GitHub Issue"
   },
-  "cache_coverage_percentage": 92.86,
-  "data_quality_score": 83,
-  "recommendation_degraded": true,
+  "cache_coverage_percentage": 100.0,
+  "data_quality_score": 90,
+  "recommendation_degraded": false,
   "manual_mobile_input_used": true,
-  "latest_manual_input_date": "2026-06-27",
+  "latest_manual_input_date": "2026-06-28",
   "manual_tickers_used": [
     "000660.KS",
     "005930.KS",
-    "7709.HK",
-    "7747.HK",
     "AAPL",
     "AMZN",
     "GOOGL",
+    "META",
     "MSFT",
     "MU",
     "NVDA",
@@ -68,37 +64,29 @@
     "TSLA"
   ],
   "manual_source": "GitHub Issue",
-  "decision_influenced_by_proxy": true,
+  "decision_influenced_by_proxy": false,
   "proxy_intraday_signal": {
-    "available": true,
-    "provider_used": "binance",
-    "symbols_used": {
-      "META": "METAUSDT"
-    },
-    "tickers_covered": [
-      "META"
-    ],
-    "proxy_ai_1d_change": 1.532,
+    "available": false,
+    "provider_used": "none",
+    "symbols_used": {},
+    "tickers_covered": [],
+    "proxy_ai_1d_change": null,
     "proxy_hbm_1d_change": null,
-    "proxy_risk_level": "Neutral",
-    "proxy_data_quality": "Partial",
+    "proxy_risk_level": "N/A",
+    "proxy_data_quality": "Missing",
     "proxy_official_conflict_flag": false,
     "warning": "Tradable proxy price is not official equity market data.",
-    "decision_influenced": true
+    "decision_influenced": false
   },
   "data_warnings": [
-    "Fallback market data provider was used; review recommendation confidence.",
-    "Missing market data for required tickers: META",
-    "Recommendation is degraded because data quality is below the target.",
-    "Manual mobile input was used from GitHub Issue on 2026-06-27.",
-    "Tradable proxy price is not official equity market data.",
-    "Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
+    "Manual mobile input was used from GitHub Issue on 2026-06-28.",
+    "Unavailable indicators due to insufficient source data: Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
   "key_indicators": [
     {
       "label": "Relative Ratio",
-      "value": null,
-      "display_value": "N/A"
+      "value": 0.4999343919862067,
+      "display_value": "0.500"
     },
     {
       "label": "Risk Score",

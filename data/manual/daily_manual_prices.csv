@@ -12,3 +12,15 @@ date,ticker,close,change_pct,market_cap,source,note,input_source,imported_at
 2026-06-27,QQQ,706.52,-1.38,,futu_official,QQQ official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
 2026-06-27,SOXX,589.94,-5.64,,futu_official,SOXX official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
 2026-06-27,TSLA,380.66,2.53,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-28,000660.KS,1768.32,0.63,,manual_official,SKHYNIXUSDT quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,005930.KS,226.96,2.41,,manual_official,SAMSUNGUSDT quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,AAPL,282.28,0.84,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,AMZN,233.71,1.07,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,GOOGL,340.25,-0.43,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,META,554.58,0.03,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,MSFT,376.11,1.58,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,MU,1142.69,-1.28,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,NVDA,193.94,0.36,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,QQQ,704.94,-1.85,,manual_official,Market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,SOXX,589.56,-6.04,,manual_official,Market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,TSLA,381.21,0.28,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
