@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from aios.decision.models import BasketSnapshot, PortfolioPosition, TechnicalSnapshot
 
@@ -45,3 +45,7 @@ class RunMetadata:
     cache_coverage_percentage: float = 0.0
     data_quality_score: int = 0
     recommendation_degraded: bool = False
+    manual_mobile_input_used: bool = False
+    latest_manual_input_date: str = "N/A"
+    manual_tickers_used: list[str] = field(default_factory=list)
+    manual_source: str = "None"

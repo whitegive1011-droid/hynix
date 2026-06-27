@@ -96,6 +96,26 @@ Import the filled CSV:
 
 The importer upserts rows by `date,ticker`, so running it multiple times will not create duplicate cache rows.
 
+Mobile manual price input through GitHub Issues:
+
+1. Open a new issue with the `Manual Daily Prices` form
+2. Keep the title as `Manual Prices YYYY-MM-DD`
+3. Paste CSV rows in this format:
+
+```text
+date,ticker,close,change_pct,market_cap,source,note
+2026-06-27,7709.HK,154.00,-14.20,,futu,"HK intraday"
+2026-06-27,000660.KS,2724000,-8.50,,naver,"SK Hynix"
+2026-06-27,005930.KS,343500,-4.00,,naver,"Samsung"
+2026-06-27,MU,1155.00,-4.80,,futu,"overnight"
+```
+
+The GitHub Actions workflow imports the issue, updates
+`data/manual/daily_manual_prices.csv`, upserts `data/cache/market_cache.csv`,
+regenerates reports, deploys GitHub Pages, comments on the issue, and closes it
+after success. If required basket tickers are missing, AIOS keeps unavailable
+metrics as `N/A` and the recommendation remains `Uncertain`.
+
 Dry run:
 
 ```bash
@@ -163,6 +183,7 @@ Workflow:
 
 ```text
 .github/workflows/aios-ci-cd.yml
+.github/workflows/manual-price-issue.yml
 ```
 
 The workflow:

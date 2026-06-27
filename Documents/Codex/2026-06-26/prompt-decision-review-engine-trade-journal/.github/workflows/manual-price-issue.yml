@@ -1,0 +1,167 @@
+name: Manual Price Issue Import
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: aios-pages
+  cancel-in-progress: false
+
+jobs:
+  import-manual-prices:
+    if: startsWith(github.event.issue.title, 'Manual Prices') || contains(join(github.event.issue.labels.*.name, ','), 'manual-prices')
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Save issue body
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          with open(os.environ["GITHUB_EVENT_PATH"], "r", encoding="utf-8") as file_obj:
+              event = json.load(file_obj)
+          Path("issue_body.txt").write_text(
+              event["issue"].get("body") or "",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Import manual prices from issue
+        env:
+          AIOS_TEST_RESULT: not_run
+          AIOS_DEPLOYMENT_STATUS: issue_import
+        run: |
+          set -o pipefail
+          python main.py import-issue \
+            --issue-body-file issue_body.txt \
+            --output-dir reports \
+            --no-input | tee import_summary.txt
+
+      - name: Regenerate AIOS reports from CSV cache
+        env:
+          AIOS_TEST_RESULT: not_run
+          AIOS_DEPLOYMENT_STATUS: generated
+        run: |
+          python main.py --provider csv --output-dir reports --no-input
+
+      - name: Run tests
+        run: python -m pytest
+
+      - name: Validate generated reports
+        run: |
+          test -f reports/latest_signal.json
+          test -f reports/investment_dashboard.xlsx
+          test -f reports/dashboard.html
+          test -f reports/history.csv
+          test -f reports/execution.log
+          test -f reports/deployment_summary.txt
+
+      - name: Commit manual data and generated reports
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/manual/daily_manual_prices.csv \
+            data/cache/market_cache.csv \
+            reports/latest_signal.json \
+            reports/investment_dashboard.xlsx \
+            reports/dashboard.html \
+            reports/history.csv \
+            reports/execution.log \
+            reports/deployment_summary.txt
+          git diff --cached --quiet || git commit -m "chore: import manual prices from issue #${{ github.event.issue.number }} [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Prepare GitHub Pages artifact
+        run: |
+          mkdir -p pages
+          cp reports/dashboard.html pages/index.html
+          cp reports/dashboard.html pages/dashboard.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Comment success on issue
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          {
+            echo "Manual price import succeeded."
+            echo
+            echo "Dashboard was regenerated and deployed."
+            echo
+            echo '```text'
+            cat import_summary.txt
+            echo '```'
+          } > issue_success_comment.md
+          gh issue comment "$ISSUE_NUMBER" --body-file issue_success_comment.md
+
+      - name: Close issue after success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh api "repos/$REPOSITORY/issues/$ISSUE_NUMBER" \
+            --method PATCH \
+            --field state=closed
+
+      - name: Comment failure on issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "Manual price import failed."
+            echo
+            echo "Workflow run: $RUN_URL"
+            if [ -f import_summary.txt ]; then
+              echo
+              echo '```text'
+              cat import_summary.txt
+              echo '```'
+            fi
+          } > issue_failure_comment.md
+          gh issue comment "$ISSUE_NUMBER" --body-file issue_failure_comment.md

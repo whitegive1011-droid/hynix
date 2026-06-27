@@ -53,6 +53,16 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
     rows = [
         ("Date", context.date),
         ("Data Source", context.metadata.data_source),
+        (
+            "Manual Mobile Input Used",
+            "Yes" if context.metadata.manual_mobile_input_used else "No",
+        ),
+        ("Manual Source", context.metadata.manual_source),
+        ("Latest Manual Input Date", context.metadata.latest_manual_input_date),
+        (
+            "Manual Tickers Used",
+            ", ".join(context.metadata.manual_tickers_used) or "None",
+        ),
         ("Last Update", context.metadata.last_update),
         ("Data Quality", context.metadata.data_quality),
         ("Data Quality Score", context.metadata.data_quality_score),
@@ -195,7 +205,7 @@ def _add_indicator_color_scale(sheet) -> None:
 
 
 def _add_indicator_chart(sheet, context: PresentationContext) -> None:
-    chart_data_start = 17
+    chart_data_start = sheet.max_row + 2
     sheet.cell(row=chart_data_start, column=1, value="Chart Metric")
     sheet.cell(row=chart_data_start, column=2, value="Value")
     for index, indicator in enumerate(context.key_indicators[:6], start=chart_data_start + 1):

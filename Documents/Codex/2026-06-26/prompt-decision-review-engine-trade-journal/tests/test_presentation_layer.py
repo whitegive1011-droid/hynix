@@ -34,6 +34,10 @@ def test_context_to_dict_renders_decision_without_recalculating() -> None:
     assert payload["data_source"] == "csv"
     assert payload["last_update"] == "2026-06-26"
     assert payload["data_quality"] == "OK"
+    assert payload["manual_mobile_input_used"] is False
+    assert payload["latest_manual_input_date"] == "N/A"
+    assert payload["manual_tickers_used"] == []
+    assert payload["manual_source"] == "None"
     assert payload["data_warnings"] == []
     assert payload["top_reasons"] == [
         "Market classified as Uptrend.",
@@ -64,6 +68,7 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert "Risk Score" in html
     assert "Data Source" in html
     assert "Data Quality" in html
+    assert "Manual Mobile Input" in html
     assert "@media (max-width: 760px)" in html
     assert "<script" not in html.lower()
 
@@ -72,17 +77,21 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
 
     dashboard = workbook["Dashboard"]
     assert dashboard["B4"].value == "csv"
-    assert dashboard["B5"].value == "2026-06-26"
-    assert dashboard["B6"].value == "OK"
-    assert dashboard["B7"].value == 100
-    assert dashboard["B8"].value == 100.0
-    assert dashboard["B9"].value is False
-    assert dashboard["B10"].value == "Hold"
-    assert dashboard["B11"].value == 72
-    assert dashboard["B12"].value == "Low"
-    assert dashboard["B13"].value == "Uptrend"
+    assert dashboard["B5"].value == "No"
+    assert dashboard["B6"].value == "None"
+    assert dashboard["B7"].value == "N/A"
+    assert dashboard["B8"].value == "None"
+    assert dashboard["B9"].value == "2026-06-26"
+    assert dashboard["B10"].value == "OK"
+    assert dashboard["B11"].value == 100
+    assert dashboard["B12"].value == 100.0
+    assert dashboard["B13"].value is False
+    assert dashboard["B14"].value == "Hold"
+    assert dashboard["B15"].value == 72
+    assert dashboard["B16"].value == "Low"
+    assert dashboard["B17"].value == "Uptrend"
     assert dashboard.freeze_panes == "A3"
-    assert dashboard.auto_filter.ref == "A3:B20"
+    assert dashboard.auto_filter.ref == "A3:B24"
     assert len(dashboard._charts) == 1
     assert len(list(dashboard.conditional_formatting)) > 0
 

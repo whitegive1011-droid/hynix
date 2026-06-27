@@ -18,3 +18,4 @@ class RunContext:
     portfolio_path: Path
     output_dir: Path
     interactive_input: bool
+    manual_input_path: Path | None = None

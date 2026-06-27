@@ -100,7 +100,7 @@ cash:
 
     workbook = load_workbook(output_dir / "investment_dashboard.xlsx")
     assert workbook["Dashboard"]["B4"].value == "csv"
-    assert workbook["Dashboard"]["B10"].value == signal["recommendation"]
+    assert workbook["Dashboard"]["B14"].value == signal["recommendation"]
 
     history = pd.read_csv(output_dir / "history.csv")
     assert set(history["ticker"]) == {"HBM1", "HBM2", "AI1", "AI2"}
