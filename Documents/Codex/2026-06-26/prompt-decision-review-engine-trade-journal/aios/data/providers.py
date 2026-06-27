@@ -102,7 +102,11 @@ class StooqProvider:
                 logging.info("Stooq does not support ticker mapping for %s", ticker)
                 continue
 
-            raw = self._download_stooq_csv(symbol)
+            try:
+                raw = self._download_stooq_csv(symbol)
+            except Exception as exc:  # pragma: no cover - live-provider guard
+                logging.warning("Stooq fetch failed for %s: %s", ticker, exc)
+                continue
             normalized = normalize_stooq_frame(raw, ticker)
             normalized = _limit_lookback(normalized, request.lookback_days)
             if not normalized.empty:
@@ -144,7 +148,11 @@ class AlphaVantageProvider:
 
         frames: list[pd.DataFrame] = []
         for ticker in _us_tickers(request.tickers)[: self.max_requests_per_fetch]:
-            raw = self._download_alpha_vantage(ticker, request.lookback_days)
+            try:
+                raw = self._download_alpha_vantage(ticker, request.lookback_days)
+            except Exception as exc:  # pragma: no cover - live-provider guard
+                logging.warning("Alpha Vantage fetch failed for %s: %s", ticker, exc)
+                continue
             normalized = normalize_alpha_vantage_payload(raw, ticker)
             normalized = _limit_lookback(normalized, request.lookback_days)
             if not normalized.empty:
@@ -193,7 +201,11 @@ class FinnhubProvider:
 
         frames: list[pd.DataFrame] = []
         for ticker in _us_tickers(request.tickers)[: self.max_requests_per_fetch]:
-            raw = self._download_finnhub(ticker, request.lookback_days)
+            try:
+                raw = self._download_finnhub(ticker, request.lookback_days)
+            except Exception as exc:  # pragma: no cover - live-provider guard
+                logging.warning("Finnhub fetch failed for %s: %s", ticker, exc)
+                continue
             normalized = normalize_finnhub_payload(raw, ticker)
             if not normalized.empty:
                 frames.append(normalized)
