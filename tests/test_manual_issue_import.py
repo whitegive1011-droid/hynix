@@ -7,8 +7,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from aios.data.models import PRICE_COLUMNS
 from aios.manual.importer import ManualIssueImporter
 from aios.manual.issue_parser import (
+    MANUAL_DAILY_PRICE_COLUMNS,
     ManualPriceIssueParseError,
     parse_manual_price_issue,
 )
@@ -228,8 +230,91 @@ coach:
         set(cache["ticker"])
     )
     assert set(proxy_cache["ticker"]) == {"NVDA", "AAPL", "MSFT", "TSLA", "MU"}
+    assert signal["date"] == "2026-01-26"
     assert signal["proxy_intraday_signal"]["available"] is True
     assert signal["proxy_intraday_signal"]["provider_used"] == "binance_proxy"
+    assert signal["proxy_intraday_signal"]["proxy_data_quality"] == "OK"
+    assert signal["proxy_intraday_signal"]["proxy_ai_1d_change"] is not None
+    assert signal["proxy_intraday_signal"]["proxy_hbm_1d_change"] is not None
+
+
+def test_proxy_issue_import_cleans_legacy_proxy_rows_from_official_files(
+    tmp_path: Path,
+) -> None:
+    paths = _write_issue_import_files(tmp_path)
+    _write_cache_fixture(paths["cache"], latest_offset=24)
+    _write_proxy_import_config(paths)
+    csv_text = (
+        "date,ticker,close,change_pct,market_cap,source,note\n"
+        "2026-01-26,AAPL,281.38,1.88,,binance_proxy,\"AAPLUSDT proxy\"\n"
+        "2026-01-26,MSFT,374.68,4.99,,binance_proxy,\"MSFTUSDT proxy\"\n"
+        "2026-01-26,TSLA,380.47,2.41,,binance_proxy,\"TSLAUSDT proxy\"\n"
+        "2026-01-26,MU,1138.19,-1.55,,binance_proxy,\"MUUSDT proxy\""
+    )
+    paths["issue"].write_text(
+        _issue_body(csv_text, trading_date="2026-01-26"),
+        encoding="utf-8",
+    )
+    legacy_rows = parse_manual_price_issue(paths["issue"].read_text()).rows
+    legacy_manual = legacy_rows.copy()
+    legacy_manual["input_source"] = "GitHub Issue"
+    legacy_manual["imported_at"] = "2026-01-26T00:00:00+00:00"
+    paths["manual"].parent.mkdir(parents=True, exist_ok=True)
+    legacy_manual[MANUAL_DAILY_PRICE_COLUMNS].to_csv(paths["manual"], index=False)
+
+    legacy_cache = pd.concat(
+        [
+            pd.read_csv(paths["cache"]),
+            pd.DataFrame(
+                [
+                    {
+                        "date": row["date"],
+                        "ticker": row["ticker"],
+                        "open": row["close"],
+                        "high": row["close"],
+                        "low": row["close"],
+                        "close": row["close"],
+                        "adj_close": row["close"],
+                        "volume": 0,
+                    }
+                    for row in legacy_rows.to_dict(orient="records")
+                ],
+                columns=PRICE_COLUMNS,
+            ),
+        ],
+        ignore_index=True,
+    )
+    legacy_cache.to_csv(paths["cache"], index=False)
+
+    assert main(
+        [
+            "import-issue",
+            "--config",
+            str(paths["config"]),
+            "--portfolio",
+            str(paths["portfolio"]),
+            "--issue-body-file",
+            str(paths["issue"]),
+            "--manual-output",
+            str(paths["manual"]),
+            "--cache-output",
+            str(paths["cache"]),
+            "--output-dir",
+            str(paths["reports"]),
+            "--no-input",
+        ]
+    ) == 0
+
+    manual = pd.read_csv(paths["manual"])
+    cache = pd.read_csv(paths["cache"])
+    signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
+
+    assert manual.empty
+    assert {"AAPL", "MSFT", "TSLA", "MU"}.isdisjoint(set(cache["ticker"]))
+    assert signal["date"] == "2026-01-26"
+    assert signal["manual_mobile_input_used"] is True
+    assert signal["manual_source"] == "GitHub Issue Proxy"
+    assert signal["manual_tickers_used"] == ["AAPL", "MSFT", "MU", "TSLA"]
     assert signal["proxy_intraday_signal"]["proxy_data_quality"] == "OK"
     assert signal["proxy_intraday_signal"]["proxy_ai_1d_change"] is not None
     assert signal["proxy_intraday_signal"]["proxy_hbm_1d_change"] is not None
@@ -332,6 +417,43 @@ cash:
         "reports": reports_dir,
         "issue": issue_path,
     }
+
+
+def _write_proxy_import_config(paths: dict[str, Path]) -> None:
+    paths["config"].write_text(
+        f"""
+app:
+  output_dir: {paths["reports"]}
+  log_level: INFO
+data:
+  primary_provider: csv
+  csv_path: {paths["cache"]}
+  lookback_days: 60
+  required_tickers:
+    - AAPL
+    - MSFT
+    - TSLA
+    - MU
+baskets:
+  ai:
+    AAPL: 0.3333
+    MSFT: 0.3333
+    TSLA: 0.3334
+  hbm:
+    MU: 1.0
+proxy:
+  enabled: false
+  symbols:
+    AAPL: AAPLUSDT
+    MSFT: MSFTUSDT
+    TSLA: TSLAUSDT
+    MU: MUUSDT
+  output_path: {paths["proxy"]}
+coach:
+  interactive_input: false
+""",
+        encoding="utf-8",
+    )
 
 
 def _write_cache_fixture(cache_path: Path, latest_offset: int) -> Path:

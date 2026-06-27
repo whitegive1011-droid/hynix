@@ -1,7 +1,7 @@
 {
   "date": "2026-06-27",
-  "recommendation": "Uncertain",
-  "confidence": 38,
+  "recommendation": "Cautious Hold",
+  "confidence": 58,
   "risk_level": "Low",
   "market_mode": "Mixed",
   "suggested_position": 400,
@@ -9,12 +9,15 @@
   "position_delta": 0,
   "top_reasons": [
     "Market classified as Mixed.",
-    "Data quality is insufficient for a reliable basket decision.",
-    "Missing required market data: 7747.HK, META, QQQ, SOXX"
+    "Official equity data is incomplete.",
+    "Tradable proxy data is used for intraday risk assessment only.",
+    "Proxy data is not official equity market data.",
+    "Proxy intraday risk level is Risk-On."
   ],
   "triggered_rules": [
-    "data_quality.insufficient",
-    "position.watch_uncertain"
+    "proxy.official_data_incomplete",
+    "proxy.intraday_signal",
+    "position.proxy_cautious_hold"
   ],
   "relative_ratio": null,
   "risk_score": null,
@@ -22,30 +25,30 @@
   "risk_score_display": "N/A",
   "data_source": "csv",
   "provider_used": "csv",
-  "last_update": "2026-06-27",
+  "last_update": "2026-06-26",
   "data_quality": "Degraded",
-  "fallback_used": true,
+  "fallback_used": false,
   "missing_tickers": [
     "7747.HK",
+    "000660.KS",
+    "005930.KS",
+    "MU",
+    "MSFT",
+    "GOOGL",
+    "AMZN",
     "META",
+    "AAPL",
+    "TSLA",
     "QQQ",
     "SOXX"
   ],
   "stale_tickers": [],
   "provider_by_ticker": {
-    "000660.KS": "GitHub Issue",
-    "005930.KS": "GitHub Issue",
-    "7709.HK": "csv",
-    "AAPL": "GitHub Issue",
-    "AMZN": "GitHub Issue",
-    "GOOGL": "GitHub Issue",
-    "MSFT": "GitHub Issue",
-    "MU": "GitHub Issue",
-    "NVDA": "GitHub Issue",
-    "TSLA": "GitHub Issue"
+    "7709.HK": "unknown",
+    "NVDA": "unknown"
   },
-  "cache_coverage_percentage": 71.43,
-  "data_quality_score": 64,
+  "cache_coverage_percentage": 14.29,
+  "data_quality_score": 12,
   "recommendation_degraded": true,
   "manual_mobile_input_used": true,
   "latest_manual_input_date": "2026-06-27",
@@ -60,26 +63,48 @@
     "NVDA",
     "TSLA"
   ],
-  "manual_source": "GitHub Issue",
-  "decision_influenced_by_proxy": false,
+  "manual_source": "GitHub Issue Proxy",
+  "decision_influenced_by_proxy": true,
   "proxy_intraday_signal": {
-    "available": false,
-    "provider_used": "none",
-    "symbols_used": {},
-    "tickers_covered": [],
-    "proxy_ai_1d_change": null,
-    "proxy_hbm_1d_change": null,
-    "proxy_risk_level": "N/A",
-    "proxy_data_quality": "Missing",
+    "available": true,
+    "provider_used": "binance+binance_proxy",
+    "symbols_used": {
+      "000660.KS": "SKHYNIXUSDT",
+      "005930.KS": "SAMSUNGUSDT",
+      "AAPL": "AAPLUSDT",
+      "AMZN": "AMZNUSDT",
+      "GOOGL": "GOOGLUSDT",
+      "META": "METAUSDT",
+      "MSFT": "MSFTUSDT",
+      "MU": "MUUSDT",
+      "NVDA": "NVDAUSDT",
+      "TSLA": "TSLAUSDT"
+    },
+    "tickers_covered": [
+      "000660.KS",
+      "005930.KS",
+      "AAPL",
+      "AMZN",
+      "GOOGL",
+      "META",
+      "MSFT",
+      "MU",
+      "NVDA",
+      "TSLA"
+    ],
+    "proxy_ai_1d_change": 2.146,
+    "proxy_hbm_1d_change": 2.0802,
+    "proxy_risk_level": "Risk-On",
+    "proxy_data_quality": "OK",
     "proxy_official_conflict_flag": false,
     "warning": "Tradable proxy price is not official equity market data.",
-    "decision_influenced": false
+    "decision_influenced": true
   },
   "data_warnings": [
-    "Fallback market data provider was used; review recommendation confidence.",
-    "Missing market data for required tickers: 7747.HK, META, QQQ, SOXX",
+    "Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX",
     "Recommendation is degraded because data quality is below the target.",
-    "Manual mobile input was used from GitHub Issue on 2026-06-27.",
+    "Manual mobile input was used from GitHub Issue Proxy on 2026-06-27.",
+    "Tradable proxy price is not official equity market data.",
     "Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
   "key_indicators": [

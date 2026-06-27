@@ -208,6 +208,7 @@ baskets:
     HBM1: 1.0
 proxy:
   enabled: false
+  output_path: {tmp_path / "proxy" / "tradable_proxy_prices.csv"}
 coach:
   interactive_input: false
 """,

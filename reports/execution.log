@@ -1062,3 +1062,87 @@
 2026-06-27 12:11:01,774 INFO root Market mode: Mixed
 2026-06-27 12:11:01,774 INFO root Confidence: 38
 2026-06-27 12:11:01,774 INFO root AIOS run completed.
+2026-06-27 20:40:19,376 INFO root AIOS run started.
+2026-06-27 20:40:19,376 INFO root Config loaded from config.yaml
+2026-06-27 20:40:19,376 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 20:40:19,376 INFO root Output directory: reports
+2026-06-27 20:40:19,376 INFO root Run mode: daily
+2026-06-27 20:40:19,376 INFO root Interactive input: False
+2026-06-27 20:40:19,376 INFO root Required tickers configured: 14
+2026-06-27 20:40:19,376 INFO root Portfolio positions configured: 2
+2026-06-27 20:40:19,381 INFO root Fetching market data from csv for 14 tickers. Attempt 1/2.
+2026-06-27 20:40:19,392 INFO root Provider used: csv
+2026-06-27 20:40:19,392 INFO root Data quality: Degraded
+2026-06-27 20:40:37,924 INFO root Market history written to reports/history.csv with 19 rows.
+2026-06-27 20:40:37,929 INFO root Tradable proxy prices written to data/proxy/tradable_proxy_prices.csv with 19 rows.
+2026-06-27 20:40:38,043 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 20:40:38,043 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 20:40:38,043 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 20:40:38,043 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 20:40:38,043 INFO root Recommendation: Proxy-Based Watch
+2026-06-27 20:40:38,043 INFO root Market mode: Mixed
+2026-06-27 20:40:38,043 INFO root Confidence: 58
+2026-06-27 20:40:38,043 INFO root AIOS run completed.
+2026-06-27 20:52:30,703 INFO root AIOS run started.
+2026-06-27 20:52:30,703 INFO root Config loaded from config.yaml
+2026-06-27 20:52:30,703 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 20:52:30,703 INFO root Output directory: reports
+2026-06-27 20:52:30,703 INFO root Run mode: daily
+2026-06-27 20:52:30,704 INFO root Interactive input: False
+2026-06-27 20:52:30,704 INFO root Required tickers configured: 14
+2026-06-27 20:52:30,704 INFO root Portfolio positions configured: 2
+2026-06-27 20:52:30,705 INFO root Fetching market data from csv for 14 tickers. Attempt 1/2.
+2026-06-27 20:52:30,710 INFO root Provider used: csv
+2026-06-27 20:52:30,710 INFO root Data quality: Degraded
+2026-06-27 20:52:48,916 INFO root Market history written to reports/history.csv with 19 rows.
+2026-06-27 20:52:48,921 INFO root Tradable proxy prices written to data/proxy/tradable_proxy_prices.csv with 19 rows.
+2026-06-27 20:52:48,999 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 20:52:48,999 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 20:52:48,999 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 20:52:48,999 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 20:52:48,999 INFO root Recommendation: Proxy-Based Watch
+2026-06-27 20:52:48,999 INFO root Market mode: Mixed
+2026-06-27 20:52:48,999 INFO root Confidence: 58
+2026-06-27 20:52:48,999 INFO root AIOS run completed.
+2026-06-27 21:07:30,321 INFO root AIOS run started.
+2026-06-27 21:07:30,321 INFO root Config loaded from config.yaml
+2026-06-27 21:07:30,321 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 21:07:30,321 INFO root Output directory: reports
+2026-06-27 21:07:30,321 INFO root Run mode: daily
+2026-06-27 21:07:30,321 INFO root Interactive input: False
+2026-06-27 21:07:30,321 INFO root Required tickers configured: 14
+2026-06-27 21:07:30,321 INFO root Portfolio positions configured: 2
+2026-06-27 21:07:30,322 INFO root Fetching market data from csv for 14 tickers. Attempt 1/2.
+2026-06-27 21:07:30,327 INFO root Provider used: csv
+2026-06-27 21:07:30,327 INFO root Data quality: Degraded
+2026-06-27 21:07:47,549 INFO root Market history written to reports/history.csv with 19 rows.
+2026-06-27 21:07:47,555 INFO root Tradable proxy prices written to data/proxy/tradable_proxy_prices.csv with 19 rows.
+2026-06-27 21:07:47,633 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 21:07:47,633 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 21:07:47,633 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 21:07:47,634 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 21:07:47,634 INFO root Recommendation: Cautious Hold
+2026-06-27 21:07:47,634 INFO root Market mode: Mixed
+2026-06-27 21:07:47,634 INFO root Confidence: 58
+2026-06-27 21:07:47,634 INFO root AIOS run completed.
+2026-06-27 21:10:16,362 INFO root AIOS run started.
+2026-06-27 21:10:16,362 INFO root Config loaded from config.yaml
+2026-06-27 21:10:16,362 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 21:10:16,362 INFO root Output directory: reports
+2026-06-27 21:10:16,362 INFO root Run mode: daily
+2026-06-27 21:10:16,362 INFO root Interactive input: False
+2026-06-27 21:10:16,362 INFO root Required tickers configured: 14
+2026-06-27 21:10:16,362 INFO root Portfolio positions configured: 2
+2026-06-27 21:10:16,363 INFO root Fetching market data from csv for 14 tickers. Attempt 1/2.
+2026-06-27 21:10:16,369 INFO root Provider used: csv
+2026-06-27 21:10:16,369 INFO root Data quality: Degraded
+2026-06-27 21:10:35,003 INFO root Market history written to reports/history.csv with 19 rows.
+2026-06-27 21:10:35,008 INFO root Tradable proxy prices written to data/proxy/tradable_proxy_prices.csv with 19 rows.
+2026-06-27 21:10:35,089 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 21:10:35,089 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 21:10:35,089 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 21:10:35,089 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 21:10:35,089 INFO root Recommendation: Cautious Hold
+2026-06-27 21:10:35,089 INFO root Market mode: Mixed
+2026-06-27 21:10:35,089 INFO root Confidence: 58
+2026-06-27 21:10:35,089 INFO root AIOS run completed.

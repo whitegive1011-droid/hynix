@@ -11,6 +11,7 @@ import pandas as pd
 from aios.app.runner import AiosRunner
 from aios.config.loader import load_config
 from aios.config.models import AiosConfig
+from aios.data.models import PRICE_COLUMNS
 from aios.data.quality import build_cache_coverage_report
 from aios.manual.issue_parser import (
     MANUAL_DAILY_PRICE_COLUMNS,
@@ -83,12 +84,17 @@ class ManualIssueImporter:
         config = load_config(self.config_path)
         official_rows = _official_issue_rows(parsed.rows)
         proxy_rows = _proxy_issue_rows(parsed.rows)
+        self._remove_existing_proxy_rows(proxy_rows)
         self._upsert_daily_manual_prices(official_rows)
-        stored_cache = upsert_csv(
-            path=self.cache_output_path,
-            frame=parsed.to_cache_frame(official_rows),
-            key_columns=["date", "ticker"],
-        )
+        official_cache_rows = parsed.to_cache_frame(official_rows)
+        if official_cache_rows.empty:
+            stored_cache = _read_existing_csv(self.cache_output_path, PRICE_COLUMNS)
+        else:
+            stored_cache = upsert_csv(
+                path=self.cache_output_path,
+                frame=official_cache_rows,
+                key_columns=["date", "ticker"],
+            )
         self._upsert_proxy_prices(proxy_rows, config)
 
         report = build_cache_coverage_report(
@@ -166,6 +172,12 @@ class ManualIssueImporter:
             key_columns=["date", "ticker", "provider"],
         )
 
+    def _remove_existing_proxy_rows(self, rows: pd.DataFrame) -> None:
+        if rows.empty:
+            return
+        _remove_proxy_rows_from_manual_file(self.manual_output_path, rows)
+        _remove_proxy_rows_from_official_cache(self.cache_output_path, rows)
+
     @staticmethod
     def _print_summary(summary: ManualIssueImportSummary) -> None:
         print("AIOS Manual Issue Import")
@@ -199,9 +211,19 @@ def missing_required_basket_warning(rows: pd.DataFrame) -> list[str]:
 def _proxy_issue_rows(rows: pd.DataFrame) -> pd.DataFrame:
     if rows.empty:
         return rows.copy()
+    source = (
+        rows["source"].astype(str)
+        if "source" in rows.columns
+        else pd.Series("", index=rows.index)
+    )
+    note = (
+        rows["note"].astype(str)
+        if "note" in rows.columns
+        else pd.Series("", index=rows.index)
+    )
     proxy_mask = (
-        rows["source"].astype(str).str.contains("proxy", case=False, na=False)
-        | rows["note"].astype(str).str.contains("proxy", case=False, na=False)
+        source.str.contains("proxy", case=False, na=False)
+        | note.str.contains("proxy", case=False, na=False)
     )
     return rows[proxy_mask].copy()
 
@@ -253,3 +275,98 @@ def _proxy_symbol_for_row(row: dict[str, object], config: AiosConfig) -> str:
         if cleaned.endswith("USDT") or cleaned.endswith("BUSD"):
             return cleaned
     return ticker
+
+
+def _remove_proxy_rows_from_manual_file(path: Path, rows: pd.DataFrame) -> None:
+    if not path.exists() or rows.empty:
+        return
+    try:
+        existing = pd.read_csv(path, keep_default_na=False)
+    except Exception:
+        return
+    if existing.empty or not {"date", "ticker"}.issubset(existing.columns):
+        return
+
+    matching_keys = _matching_date_ticker_mask(existing, rows)
+    existing_proxy_rows = _proxy_issue_rows(existing)
+    proxy_indexes = set(existing_proxy_rows.index)
+    remove_mask = matching_keys & existing.index.to_series().isin(proxy_indexes)
+    if not bool(remove_mask.any()):
+        return
+
+    remaining = existing.loc[~remove_mask].copy()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    remaining.to_csv(path, index=False)
+
+
+def _remove_proxy_rows_from_official_cache(path: Path, rows: pd.DataFrame) -> None:
+    if not path.exists() or rows.empty:
+        return
+    try:
+        existing = pd.read_csv(path)
+    except Exception:
+        return
+    required_columns = {
+        "date",
+        "ticker",
+        "open",
+        "high",
+        "low",
+        "close",
+        "adj_close",
+        "volume",
+    }
+    if existing.empty or not required_columns.issubset(existing.columns):
+        return
+
+    remove_mask = pd.Series(False, index=existing.index)
+    normalized = existing.copy()
+    normalized["date"] = normalized["date"].astype(str)
+    normalized["ticker"] = normalized["ticker"].astype(str)
+    for column in ["open", "high", "low", "close", "adj_close", "volume"]:
+        normalized[column] = pd.to_numeric(normalized[column], errors="coerce")
+
+    for row in rows.to_dict(orient="records"):
+        close = float(row["close"])
+        row_mask = (
+            (normalized["date"] == str(row["date"]))
+            & (normalized["ticker"] == str(row["ticker"]))
+            & _nearly_equal(normalized["close"], close)
+            & _nearly_equal(normalized["open"], close)
+            & _nearly_equal(normalized["high"], close)
+            & _nearly_equal(normalized["low"], close)
+            & _nearly_equal(normalized["adj_close"], close)
+            & _nearly_equal(normalized["volume"], 0.0)
+        )
+        remove_mask = remove_mask | row_mask
+
+    if not bool(remove_mask.any()):
+        return
+
+    remaining = existing.loc[~remove_mask].copy()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    remaining.to_csv(path, index=False)
+
+
+def _read_existing_csv(path: Path, columns: list[str]) -> pd.DataFrame:
+    if not path.exists():
+        return pd.DataFrame(columns=columns)
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame(columns=columns)
+
+
+def _matching_date_ticker_mask(existing: pd.DataFrame, rows: pd.DataFrame) -> pd.Series:
+    keys = {
+        (str(row["date"]), str(row["ticker"]))
+        for row in rows.to_dict(orient="records")
+    }
+    return existing.apply(
+        lambda row: (str(row["date"]), str(row["ticker"])) in keys,
+        axis=1,
+    )
+
+
+def _nearly_equal(series: pd.Series, value: float) -> pd.Series:
+    return (series - value).abs() <= 1e-9

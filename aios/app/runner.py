@@ -143,6 +143,7 @@ class AiosRunner:
         run_id = run_id_from_timestamp(run_timestamp)
         prices, metadata = self._fetch_market_data(context)
         proxy_prices = self._fetch_proxy_prices(context)
+        official_manual_tickers = list(metadata.manual_tickers_used)
         proxy_latest_date = _proxy_latest_date(proxy_prices)
         history = prepare_history_frame(
             prices=prices,
@@ -166,7 +167,10 @@ class AiosRunner:
         if decision_data_quality.required_basket_tickers_missing:
             market_state = replace(
                 market_state,
-                basket=self._mask_incomplete_basket_metrics(market_state.basket),
+                basket=self._mask_incomplete_basket_metrics(
+                    market_state.basket,
+                    fallback_date=proxy_latest_date,
+                ),
             )
         portfolio_state = self._build_portfolio_state(
             context,
@@ -176,7 +180,7 @@ class AiosRunner:
             context=context,
             proxy_prices=proxy_prices,
             official_basket=market_state.basket,
-            manual_tickers=metadata.manual_tickers_used,
+            manual_tickers=official_manual_tickers,
         )
         decision_input = DecisionInput(
             basket=market_state.basket,
@@ -191,6 +195,7 @@ class AiosRunner:
         ).decide(decision_input)
         if decision.proxy_influenced:
             proxy_signal = replace(proxy_signal, decision_influenced=True)
+        metadata = _metadata_with_manual_proxy_input(metadata, proxy_prices)
         presentation = build_presentation_context(
             decision=decision,
             basket=market_state.basket,
@@ -419,7 +424,9 @@ class AiosRunner:
         if frame.empty or not required_columns.issubset(frame.columns):
             return pd.DataFrame(columns=PRICE_COLUMNS)
 
-        manual = frame.copy()
+        manual = _manual_official_rows(frame)
+        if manual.empty:
+            return pd.DataFrame(columns=PRICE_COLUMNS)
         manual["date"] = pd.to_datetime(
             manual["date"],
             errors="coerce",
@@ -528,7 +535,9 @@ class AiosRunner:
         if frame.empty or "date" not in frame.columns or "ticker" not in frame.columns:
             return _default_manual_metadata()
 
-        normalized = frame.copy()
+        normalized = _manual_official_rows(frame)
+        if normalized.empty:
+            return _default_manual_metadata()
         normalized["date"] = pd.to_datetime(
             normalized["date"],
             errors="coerce",
@@ -743,8 +752,12 @@ class AiosRunner:
         )
 
     @staticmethod
-    def _mask_incomplete_basket_metrics(basket: BasketSnapshot) -> BasketSnapshot:
-        return BasketSnapshot(date=basket.date)
+    def _mask_incomplete_basket_metrics(
+        basket: BasketSnapshot,
+        fallback_date: str | None = None,
+    ) -> BasketSnapshot:
+        date_value = max([date for date in [basket.date, fallback_date] if date])
+        return BasketSnapshot(date=date_value)
 
     @staticmethod
     def _select_primary_ticker(context: RunContext, technicals) -> str:
@@ -777,6 +790,113 @@ def _default_manual_metadata() -> dict[str, object]:
         "tickers": [],
         "source": "None",
     }
+
+
+def _manual_official_rows(frame: pd.DataFrame) -> pd.DataFrame:
+    """Return only rows that are manual official prices, not proxy inputs."""
+
+    if frame.empty:
+        return frame.copy()
+    source = (
+        frame["source"].astype(str)
+        if "source" in frame.columns
+        else pd.Series("", index=frame.index)
+    )
+    note = (
+        frame["note"].astype(str)
+        if "note" in frame.columns
+        else pd.Series("", index=frame.index)
+    )
+    proxy_mask = (
+        source.str.contains("proxy", case=False, na=False)
+        | note.str.contains("proxy", case=False, na=False)
+    )
+    return frame.loc[~proxy_mask].copy()
+
+
+def _metadata_with_manual_proxy_input(
+    metadata: RunMetadata,
+    proxy_prices: pd.DataFrame,
+) -> RunMetadata:
+    proxy_metadata = _manual_proxy_metadata(proxy_prices)
+    if not proxy_metadata.get("used"):
+        return metadata
+
+    manual_tickers = sorted(
+        {
+            *metadata.manual_tickers_used,
+            *[str(ticker) for ticker in proxy_metadata.get("tickers", [])],
+        }
+    )
+    latest_date = _latest_non_na_date(
+        [
+            metadata.latest_manual_input_date,
+            str(proxy_metadata.get("latest_date", "N/A")),
+        ]
+    )
+    source = _combined_source(
+        metadata.manual_source,
+        str(proxy_metadata.get("source", "GitHub Issue Proxy")),
+    )
+    return replace(
+        metadata,
+        manual_mobile_input_used=True,
+        latest_manual_input_date=latest_date,
+        manual_tickers_used=manual_tickers,
+        manual_source=source,
+    )
+
+
+def _manual_proxy_metadata(proxy_prices: pd.DataFrame) -> dict[str, object]:
+    if proxy_prices.empty:
+        return _default_manual_metadata()
+
+    frame = proxy_prices.copy()
+    required = {"date", "ticker", "source", "provider", "session"}
+    if not required.issubset(frame.columns):
+        return _default_manual_metadata()
+
+    source = frame["source"].astype(str)
+    provider = frame["provider"].astype(str)
+    session = frame["session"].astype(str)
+    manual_proxy = frame[
+        source.str.contains("GitHub Issue", case=False, na=False)
+        | provider.str.contains("proxy", case=False, na=False)
+        | session.str.contains("manual", case=False, na=False)
+    ].copy()
+    if manual_proxy.empty:
+        return _default_manual_metadata()
+
+    manual_proxy["date"] = pd.to_datetime(
+        manual_proxy["date"],
+        errors="coerce",
+    ).dt.date.astype(str)
+    manual_proxy = manual_proxy[manual_proxy["date"] != "NaT"]
+    if manual_proxy.empty:
+        return _default_manual_metadata()
+
+    latest_date = max(manual_proxy["date"].astype(str))
+    latest_rows = manual_proxy[manual_proxy["date"].astype(str) == latest_date]
+    return {
+        "used": True,
+        "latest_date": latest_date,
+        "tickers": sorted(latest_rows["ticker"].astype(str).unique()),
+        "source": "GitHub Issue Proxy",
+    }
+
+
+def _latest_non_na_date(values: list[str]) -> str:
+    dates = [value for value in values if value and value != "N/A"]
+    return max(dates) if dates else "N/A"
+
+
+def _combined_source(*values: str) -> str:
+    sources = [
+        value
+        for value in values
+        if value and value != "None" and value != "N/A"
+    ]
+    return "+".join(sorted(set(sources))) if sources else "None"
 
 
 def _proxy_latest_date(proxy_prices: pd.DataFrame) -> str | None:

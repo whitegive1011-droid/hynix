@@ -1,0 +1,20 @@
+date,ticker,proxy_symbol,proxy_price,proxy_change_pct,source,provider,timestamp,session,warning
+2026-06-27,000660.KS,SKHYNIXUSDT,1773.69,3.144,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:26+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,000660.KS,SKHYNIXUSDT,1762.51,-0.12,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,005930.KS,SAMSUNGUSDT,226.41,4.761,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:07+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,005930.KS,SAMSUNGUSDT,225.91,3.19,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,AAPL,AAPLUSDT,281.69,1.999,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:08+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,AAPL,AAPLUSDT,281.38,1.88,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,AMZN,AMZNUSDT,233.28,2.496,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:09:00+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,AMZN,AMZNUSDT,233.24,2.52,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,GOOGL,GOOGLUSDT,340.28,-0.657,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:07+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,GOOGL,GOOGLUSDT,339.57,-0.61,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,META,METAUSDT,554.39,1.686,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:08+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,MSFT,MSFTUSDT,375.12,4.765,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:07+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,MSFT,MSFTUSDT,374.68,4.99,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,MU,MUUSDT,1143.11,1.338,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:26+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,MU,MUUSDT,1138.19,-1.55,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,NVDA,NVDAUSDT,193.76,0.649,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:23+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,NVDA,NVDAUSDT,193.69,-0.06,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
+2026-06-27,TSLA,TSLAUSDT,380.66,3.079,Binance public USD-M futures 24hr ticker,binance,2026-06-27T13:10:07+00:00,intraday,Tradable proxy price is not official equity market data.
+2026-06-27,TSLA,TSLAUSDT,380.47,2.41,GitHub Issue,binance_proxy,2026-06-27T13:10:16+00:00,manual,Tradable proxy price is not official equity market data.
