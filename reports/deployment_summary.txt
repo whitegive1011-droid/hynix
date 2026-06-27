@@ -1,6 +1,6 @@
 AIOS Deployment Summary
 =======================
-Execution Time: 7.21s
+Execution Time: 5.81s
 Provider Used: csv
 Data Source: csv
 Data Quality: Degraded
