@@ -27,7 +27,7 @@
   "provider_used": "csv",
   "last_update": "2026-06-27",
   "data_quality": "Degraded",
-  "fallback_used": false,
+  "fallback_used": true,
   "missing_tickers": [
     "META"
   ],
@@ -87,6 +87,7 @@
     "decision_influenced": true
   },
   "data_warnings": [
+    "Fallback market data provider was used; review recommendation confidence.",
     "Missing market data for required tickers: META",
     "Recommendation is degraded because data quality is below the target.",
     "Manual mobile input was used from GitHub Issue+GitHub Issue Proxy on 2026-06-27.",

@@ -1447,3 +1447,81 @@
 2026-06-27 13:46:38,090 INFO root Market mode: Mixed
 2026-06-27 13:46:38,090 INFO root Confidence: 58
 2026-06-27 13:46:38,090 INFO root AIOS run completed.
+2026-06-27 13:48:26,855 INFO root AIOS run started.
+2026-06-27 13:48:26,855 INFO root Config loaded from config.yaml
+2026-06-27 13:48:26,855 INFO root Portfolio loaded from portfolio.yaml
+2026-06-27 13:48:26,855 INFO root Output directory: reports
+2026-06-27 13:48:26,855 INFO root Run mode: daily
+2026-06-27 13:48:26,855 INFO root Interactive input: False
+2026-06-27 13:48:26,855 INFO root Required tickers configured: 14
+2026-06-27 13:48:26,855 INFO root Portfolio positions configured: 2
+2026-06-27 13:48:26,861 INFO root Fetching market data from multi-source provider for 14 tickers.
+2026-06-27 13:48:27,853 WARNING root Provider yfinance failed: "['date'] not in index"
+2026-06-27 13:48:27,853 INFO root Stooq does not support ticker mapping for 7709.HK
+2026-06-27 13:48:27,853 INFO root Stooq does not support ticker mapping for 7747.HK
+2026-06-27 13:48:27,853 INFO root Stooq does not support ticker mapping for 000660.KS
+2026-06-27 13:48:27,853 INFO root Stooq does not support ticker mapping for 005930.KS
+2026-06-27 13:48:28,486 WARNING root Stooq fetch failed for MU: HTTP Error 404: Not Found
+2026-06-27 13:48:28,971 WARNING root Stooq fetch failed for NVDA: HTTP Error 404: Not Found
+2026-06-27 13:48:29,323 WARNING root Stooq fetch failed for MSFT: HTTP Error 404: Not Found
+2026-06-27 13:48:29,684 WARNING root Stooq fetch failed for GOOGL: HTTP Error 404: Not Found
+2026-06-27 13:48:30,052 WARNING root Stooq fetch failed for AMZN: HTTP Error 404: Not Found
+2026-06-27 13:48:30,405 WARNING root Stooq fetch failed for META: HTTP Error 404: Not Found
+2026-06-27 13:48:30,931 WARNING root Stooq fetch failed for AAPL: HTTP Error 404: Not Found
+2026-06-27 13:48:31,284 WARNING root Stooq fetch failed for TSLA: HTTP Error 404: Not Found
+2026-06-27 13:48:31,648 WARNING root Stooq fetch failed for QQQ: HTTP Error 404: Not Found
+2026-06-27 13:48:32,016 WARNING root Stooq fetch failed for SOXX: HTTP Error 404: Not Found
+2026-06-27 13:48:32,018 INFO root Alpha Vantage provider disabled; API key is missing.
+2026-06-27 13:48:32,018 INFO root Finnhub provider disabled; API key is missing.
+2026-06-27 13:48:32,050 INFO root Provider used: csv
+2026-06-27 13:48:32,050 INFO root Data quality: Degraded
+2026-06-27 13:48:32,195 INFO root Binance proxy endpoint failed for MSFTUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,311 INFO root Binance proxy endpoint failed for MSFTUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,440 INFO root Binance proxy endpoint failed for MSFTUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,441 WARNING root Binance proxy fetch failed for MSFT (MSFTUSDT): HTTP Error 451: 
+2026-06-27 13:48:32,473 INFO root Binance proxy endpoint failed for GOOGLUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,504 INFO root Binance proxy endpoint failed for GOOGLUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,538 INFO root Binance proxy endpoint failed for GOOGLUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,538 WARNING root Binance proxy fetch failed for GOOGL (GOOGLUSDT): HTTP Error 451: 
+2026-06-27 13:48:32,597 INFO root Binance proxy endpoint failed for AMZNUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,628 INFO root Binance proxy endpoint failed for AMZNUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,656 INFO root Binance proxy endpoint failed for AMZNUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,656 WARNING root Binance proxy fetch failed for AMZN (AMZNUSDT): HTTP Error 451: 
+2026-06-27 13:48:32,701 INFO root Binance proxy endpoint failed for METAUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,732 INFO root Binance proxy endpoint failed for METAUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,760 INFO root Binance proxy endpoint failed for METAUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,760 WARNING root Binance proxy fetch failed for META (METAUSDT): HTTP Error 451: 
+2026-06-27 13:48:32,848 INFO root Binance proxy endpoint failed for AAPLUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,880 INFO root Binance proxy endpoint failed for AAPLUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,908 INFO root Binance proxy endpoint failed for AAPLUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:32,908 WARNING root Binance proxy fetch failed for AAPL (AAPLUSDT): HTTP Error 451: 
+2026-06-27 13:48:33,003 INFO root Binance proxy endpoint failed for TSLAUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,039 INFO root Binance proxy endpoint failed for TSLAUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,067 INFO root Binance proxy endpoint failed for TSLAUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,067 WARNING root Binance proxy fetch failed for TSLA (TSLAUSDT): HTTP Error 451: 
+2026-06-27 13:48:33,100 INFO root Binance proxy endpoint failed for NVDAUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,132 INFO root Binance proxy endpoint failed for NVDAUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,187 INFO root Binance proxy endpoint failed for NVDAUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,187 WARNING root Binance proxy fetch failed for NVDA (NVDAUSDT): HTTP Error 451: 
+2026-06-27 13:48:33,220 INFO root Binance proxy endpoint failed for MUUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,253 INFO root Binance proxy endpoint failed for MUUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,357 INFO root Binance proxy endpoint failed for MUUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,358 WARNING root Binance proxy fetch failed for MU (MUUSDT): HTTP Error 451: 
+2026-06-27 13:48:33,443 INFO root Binance proxy endpoint failed for SKHYNIXUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,476 INFO root Binance proxy endpoint failed for SKHYNIXUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,531 INFO root Binance proxy endpoint failed for SKHYNIXUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,531 WARNING root Binance proxy fetch failed for 000660.KS (SKHYNIXUSDT): HTTP Error 451: 
+2026-06-27 13:48:33,563 INFO root Binance proxy endpoint failed for SAMSUNGUSDT via https://www.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,596 INFO root Binance proxy endpoint failed for SAMSUNGUSDT via https://fapi.binance.com/fapi/v1/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,626 INFO root Binance proxy endpoint failed for SAMSUNGUSDT via https://api.binance.com/api/v3/ticker/24hr: HTTP Error 451: 
+2026-06-27 13:48:33,626 WARNING root Binance proxy fetch failed for 005930.KS (SAMSUNGUSDT): HTTP Error 451: 
+2026-06-27 13:48:34,040 INFO root Market history written to reports/history.csv with 24 rows.
+2026-06-27 13:48:34,044 INFO root Tradable proxy prices written to data/proxy/tradable_proxy_prices.csv with 19 rows.
+2026-06-27 13:48:34,227 INFO root Latest signal written to reports/latest_signal.json
+2026-06-27 13:48:34,228 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-27 13:48:34,228 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-27 13:48:34,228 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-27 13:48:34,228 INFO root Recommendation: Proxy-Based Watch
+2026-06-27 13:48:34,228 INFO root Market mode: Mixed
+2026-06-27 13:48:34,228 INFO root Confidence: 58
+2026-06-27 13:48:34,228 INFO root AIOS run completed.
