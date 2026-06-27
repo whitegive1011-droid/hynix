@@ -47,6 +47,10 @@
   "cache_coverage_percentage": 14.29,
   "data_quality_score": 12,
   "recommendation_degraded": true,
+  "manual_mobile_input_used": false,
+  "latest_manual_input_date": "N/A",
+  "manual_tickers_used": [],
+  "manual_source": "None",
   "data_warnings": [
     "Fallback market data provider was used; review recommendation confidence.",
     "Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX",
