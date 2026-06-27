@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import logging
 from pathlib import Path
 from typing import Protocol
 import urllib.parse
@@ -20,7 +21,11 @@ from aios.proxy.models import (
 )
 
 
-BINANCE_FUTURES_TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/24hr"
+BINANCE_FUTURES_TICKER_URLS = [
+    "https://www.binance.com/fapi/v1/ticker/24hr",
+    "https://fapi.binance.com/fapi/v1/ticker/24hr",
+]
+BINANCE_FUTURES_TICKER_URL = BINANCE_FUTURES_TICKER_URLS[0]
 BINANCE_SPOT_TICKER_URL = "https://api.binance.com/api/v3/ticker/24hr"
 
 
@@ -122,7 +127,13 @@ class BinanceProxyPriceProvider:
                 continue
             try:
                 payload = self._download(symbol)
-            except Exception:
+            except Exception as exc:
+                logging.warning(
+                    "Binance proxy fetch failed for %s (%s): %s",
+                    ticker,
+                    symbol,
+                    exc,
+                )
                 continue
             row = _binance_payload_to_row(payload, ticker, symbol, request.session)
             if row is not None:
@@ -131,14 +142,21 @@ class BinanceProxyPriceProvider:
 
     def _download(self, symbol: str) -> dict:
         last_error: Exception | None = None
-        for market_type, base_url in [
-            ("USD-M futures", BINANCE_FUTURES_TICKER_URL),
+        endpoint_order = [
+            *[("USD-M futures", url) for url in BINANCE_FUTURES_TICKER_URLS],
             ("spot", BINANCE_SPOT_TICKER_URL),
-        ]:
+        ]
+        for market_type, base_url in endpoint_order:
             try:
                 payload = self._download_from_url(base_url, symbol)
             except Exception as exc:
                 last_error = exc
+                logging.info(
+                    "Binance proxy endpoint failed for %s via %s: %s",
+                    symbol,
+                    base_url,
+                    exc,
+                )
                 continue
             payload["_aios_market_type"] = market_type
             return payload
