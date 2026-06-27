@@ -15,7 +15,11 @@ def test_github_actions_runs_tests_before_deployment() -> None:
     assert parsed["name"] == "AIOS CI/CD"
     assert "on" in parsed
     assert "test-generate-and-deploy" in parsed["jobs"]
+    assert "[skip ci]" in parsed["jobs"]["test-generate-and-deploy"]["if"]
     assert pytest_index < generate_index < deploy_index
+    assert "fetch-depth: 0" in workflow
+    assert "git pull --rebase origin main" in workflow
+    assert "git push origin HEAD:main" in workflow
     assert "actions/deploy-pages@v4" in workflow
     assert "reports/dashboard.html" in workflow
     assert "reports/investment_dashboard.xlsx" in workflow
