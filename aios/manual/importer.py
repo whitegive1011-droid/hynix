@@ -1,0 +1,154 @@
+"""Import manual GitHub Issue prices into AIOS cache and reports."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pandas as pd
+
+from aios.app.runner import AiosRunner
+from aios.config.loader import load_config
+from aios.data.quality import build_cache_coverage_report
+from aios.manual.issue_parser import (
+    MANUAL_DAILY_PRICE_COLUMNS,
+    ManualPriceIssueRows,
+    build_manual_issue_warnings,
+    parse_manual_price_issue,
+)
+from aios.storage.csv_store import upsert_csv
+
+
+@dataclass(frozen=True)
+class ManualIssueImportSummary:
+    imported_rows: int
+    imported_tickers: list[str]
+    latest_date: str
+    warnings: list[str]
+    manual_output_path: Path
+    cache_output_path: Path
+    output_dir: Path
+
+
+class ManualIssueImporter:
+    """Import one GitHub Issue submission and regenerate AIOS reports."""
+
+    def __init__(
+        self,
+        config_path: Path,
+        portfolio_path: Path,
+        issue_body_file: Path,
+        manual_output_path: Path,
+        cache_output_path: Path,
+        output_dir: Path,
+        no_input: bool = True,
+    ) -> None:
+        self.config_path = config_path
+        self.portfolio_path = portfolio_path
+        self.issue_body_file = issue_body_file
+        self.manual_output_path = manual_output_path
+        self.cache_output_path = cache_output_path
+        self.output_dir = output_dir
+        self.no_input = no_input
+
+    def run(self) -> int:
+        summary = self.import_prices()
+        self._print_summary(summary)
+        AiosRunner(
+            config_path=self.config_path,
+            portfolio_path=self.portfolio_path,
+            provider_override="csv",
+            output_dir_override=self.output_dir,
+            no_input=self.no_input,
+            csv_path_override=self.cache_output_path,
+            manual_input_path_override=self.manual_output_path,
+        ).run()
+        return 0
+
+    def import_prices(self) -> ManualIssueImportSummary:
+        if not self.issue_body_file.exists():
+            raise FileNotFoundError(
+                f"Issue body file not found: {self.issue_body_file}"
+            )
+
+        parsed = parse_manual_price_issue(
+            self.issue_body_file.read_text(encoding="utf-8")
+        )
+        self._upsert_daily_manual_prices(parsed)
+        stored_cache = upsert_csv(
+            path=self.cache_output_path,
+            frame=parsed.to_cache_frame(),
+            key_columns=["date", "ticker"],
+        )
+
+        config = load_config(self.config_path)
+        report = build_cache_coverage_report(
+            prices=stored_cache,
+            required_tickers=config.data.required_tickers,
+            provider_by_ticker={
+                ticker: "GitHub Issue" for ticker in parsed.tickers
+            },
+            stale_price_days=config.data_quality.stale_price_days,
+        )
+        warnings = [
+            *parsed.warnings,
+            *(
+                [
+                    "Missing configured tickers after import: "
+                    + ", ".join(report.missing_tickers)
+                ]
+                if report.missing_tickers
+                else []
+            ),
+        ]
+        return ManualIssueImportSummary(
+            imported_rows=len(parsed.rows),
+            imported_tickers=parsed.tickers,
+            latest_date=parsed.latest_date,
+            warnings=warnings,
+            manual_output_path=self.manual_output_path,
+            cache_output_path=self.cache_output_path,
+            output_dir=self.output_dir,
+        )
+
+    def _upsert_daily_manual_prices(
+        self,
+        parsed: ManualPriceIssueRows,
+    ) -> pd.DataFrame:
+        rows = parsed.rows.copy()
+        rows["input_source"] = "GitHub Issue"
+        rows["imported_at"] = datetime.now(timezone.utc).isoformat(
+            timespec="seconds"
+        )
+        return upsert_csv(
+            path=self.manual_output_path,
+            frame=rows[MANUAL_DAILY_PRICE_COLUMNS],
+            key_columns=["date", "ticker"],
+        )
+
+    @staticmethod
+    def _print_summary(summary: ManualIssueImportSummary) -> None:
+        print("AIOS Manual Issue Import")
+        print("========================")
+        print(f"Imported rows: {summary.imported_rows}")
+        print(f"Latest manual input date: {summary.latest_date}")
+        print(
+            "Manual tickers used: "
+            + (", ".join(summary.imported_tickers) or "None")
+        )
+        print(f"Manual file: {summary.manual_output_path}")
+        print(f"Cache file: {summary.cache_output_path}")
+        print(f"Reports output: {summary.output_dir}")
+        if summary.warnings:
+            print("Warnings:")
+            for warning in summary.warnings:
+                print(f"- {warning}")
+        else:
+            print("Warnings: None")
+
+
+def missing_required_basket_warning(rows: pd.DataFrame) -> list[str]:
+    """Return warnings for tests and lightweight callers."""
+
+    return build_manual_issue_warnings(rows)

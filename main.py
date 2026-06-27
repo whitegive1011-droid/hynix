@@ -12,6 +12,7 @@ from aios.app.cache_seeder import (
     ManualCacheTemplate,
 )
 from aios.app.runner import AiosRunner
+from aios.manual.importer import ManualIssueImporter
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -76,6 +77,46 @@ def build_parser() -> argparse.ArgumentParser:
         help="CSV cache path to upsert.",
     )
 
+    issue_parser = subparsers.add_parser(
+        "import-issue",
+        help="Import manual market prices from a GitHub Issue body.",
+    )
+    issue_parser.add_argument(
+        "--config",
+        default="config.yaml",
+        help="Path to the AIOS config YAML file.",
+    )
+    issue_parser.add_argument(
+        "--portfolio",
+        default="portfolio.yaml",
+        help="Path to the portfolio YAML file.",
+    )
+    issue_parser.add_argument(
+        "--issue-body-file",
+        required=True,
+        help="Path to the saved GitHub Issue body text.",
+    )
+    issue_parser.add_argument(
+        "--manual-output",
+        default="data/manual/daily_manual_prices.csv",
+        help="CSV path for normalized manual issue submissions.",
+    )
+    issue_parser.add_argument(
+        "--cache-output",
+        default="data/cache/market_cache.csv",
+        help="CSV cache path to upsert with manual issue prices.",
+    )
+    issue_parser.add_argument(
+        "--output-dir",
+        default="reports",
+        help="Directory for generated reports and logs.",
+    )
+    issue_parser.add_argument(
+        "--no-input",
+        action="store_true",
+        help="Disable interactive Investment Coach input.",
+    )
+
     parser.add_argument(
         "--config",
         default="config.yaml",
@@ -134,6 +175,16 @@ def main(argv: list[str] | None = None) -> int:
             config_path=Path(args.config),
             input_path=Path(args.input),
             output_path=Path(args.output),
+        ).run()
+    if args.command == "import-issue":
+        return ManualIssueImporter(
+            config_path=Path(args.config),
+            portfolio_path=Path(args.portfolio),
+            issue_body_file=Path(args.issue_body_file),
+            manual_output_path=Path(args.manual_output),
+            cache_output_path=Path(args.cache_output),
+            output_dir=Path(args.output_dir),
+            no_input=args.no_input,
         ).run()
 
     runner = AiosRunner(

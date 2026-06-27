@@ -28,3 +28,32 @@ def test_github_actions_runs_tests_before_deployment() -> None:
     assert "reports/execution.log" in workflow
     assert "reports/deployment_summary.txt" in workflow
     assert "secrets." not in workflow
+
+
+def test_manual_price_issue_workflow_imports_and_deploys() -> None:
+    workflow_path = Path(".github/workflows/manual-price-issue.yml")
+    issue_form_path = Path(".github/ISSUE_TEMPLATE/manual_prices.yml")
+    workflow = workflow_path.read_text(encoding="utf-8")
+    issue_form = issue_form_path.read_text(encoding="utf-8")
+    parsed = yaml.load(workflow, Loader=yaml.BaseLoader)
+
+    assert parsed["name"] == "Manual Price Issue Import"
+    assert parsed["on"]["issues"]["types"] == ["opened", "edited"]
+    assert parsed["permissions"]["contents"] == "write"
+    assert parsed["permissions"]["issues"] == "write"
+    assert parsed["permissions"]["pages"] == "write"
+    assert parsed["permissions"]["id-token"] == "write"
+    assert "manual-prices" in workflow
+    assert "python main.py import-issue" in workflow
+    assert "python main.py --provider csv --output-dir reports --no-input" in workflow
+    assert "python -m pytest" in workflow
+    assert "data/manual/daily_manual_prices.csv" in workflow
+    assert "data/cache/market_cache.csv" in workflow
+    assert "actions/deploy-pages@v4" in workflow
+    assert "gh issue comment" in workflow
+    assert "--field state=closed" in workflow
+    assert "secrets." not in workflow
+
+    assert "Manual Prices YYYY-MM-DD" in issue_form
+    assert "Trading date" in issue_form
+    assert "date,ticker,close,change_pct,market_cap,source,note" in issue_form

@@ -10,3 +10,4 @@ data/raw/
 data/processed/
 !data/cache/
 !data/cache/market_cache.csv
+data/cache/manual_prices_template.csv

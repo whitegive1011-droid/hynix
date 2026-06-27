@@ -246,8 +246,20 @@
               <strong>{{ signal.data_source }}</strong>
             </div>
             <div class="metric">
+              <span>Manual Mobile Input</span>
+              <strong>{{ "Yes" if signal.manual_mobile_input_used else "No" }}</strong>
+            </div>
+            <div class="metric">
+              <span>Manual Source</span>
+              <strong>{{ signal.manual_source }}</strong>
+            </div>
+            <div class="metric">
               <span>Last Update</span>
               <strong>{{ signal.last_update }}</strong>
+            </div>
+            <div class="metric">
+              <span>Latest Manual Input</span>
+              <strong>{{ signal.latest_manual_input_date }}</strong>
             </div>
             <div class="metric">
               <span>Data Quality</span>
@@ -286,6 +298,20 @@
           <li>{{ warning }}</li>
           {% endfor %}
         </ul>
+      </section>
+      {% endif %}
+
+      {% if signal.manual_tickers_used %}
+      <section style="margin-top: 16px;">
+        <h2>Manual Tickers Used</h2>
+        <div class="indicator-list">
+          {% for ticker in signal.manual_tickers_used %}
+          <div class="indicator">
+            <span class="label">{{ ticker }}</span>
+            <span class="value">GitHub Issue</span>
+          </div>
+          {% endfor %}
+        </div>
       </section>
       {% endif %}
 

@@ -56,6 +56,8 @@ class AiosRunner:
         output_dir_override: Path | None = None,
         no_input: bool = False,
         dry_run: bool = False,
+        csv_path_override: Path | None = None,
+        manual_input_path_override: Path | None = None,
     ) -> None:
         self.config_path = config_path
         self.portfolio_path = portfolio_path
@@ -64,6 +66,8 @@ class AiosRunner:
         self.output_dir_override = output_dir_override
         self.no_input = no_input
         self.dry_run = dry_run
+        self.csv_path_override = csv_path_override
+        self.manual_input_path_override = manual_input_path_override
 
     def run(self) -> int:
         started = time.perf_counter()
@@ -79,6 +83,8 @@ class AiosRunner:
                 config.data,
                 primary_provider=self.provider_override,
             )
+        if self.csv_path_override:
+            config.data = replace(config.data, csv_path=self.csv_path_override)
 
         output_dir = ensure_output_dir(config.app.output_dir)
         configure_logging(output_dir, config.app.log_level)
@@ -92,6 +98,7 @@ class AiosRunner:
             interactive_input=(
                 config.coach.interactive_input and not self.no_input
             ),
+            manual_input_path=self.manual_input_path_override,
         )
 
         self._log_startup(context)
@@ -196,6 +203,7 @@ class AiosRunner:
             tickers=context.config.data.required_tickers,
             lookback_days=context.config.data.lookback_days,
         )
+        manual_metadata = self._manual_input_metadata(context)
         if context.config.data.primary_provider == "multi":
             provider = create_market_data_provider(
                 "multi",
@@ -214,6 +222,7 @@ class AiosRunner:
                     fallback_used=result.provider_mix not in {"none", "yfinance"},
                     provider_by_ticker=result.provider_by_ticker,
                     coverage=result.coverage,
+                    manual_metadata=manual_metadata,
                 )
                 logging.info("Provider used: %s", metadata.provider_used)
                 logging.info("Data quality: %s", metadata.data_quality)
@@ -267,6 +276,7 @@ class AiosRunner:
             provider_used=provider_used,
             required_tickers=context.config.data.required_tickers,
             fallback_used=fallback_used,
+            manual_metadata=manual_metadata,
         )
         logging.info("Provider used: %s", metadata.provider_used)
         logging.info("Data quality: %s", metadata.data_quality)
@@ -343,6 +353,59 @@ class AiosRunner:
         return context.output_dir / "history.csv"
 
     @staticmethod
+    def _manual_input_metadata(context: RunContext) -> dict[str, object]:
+        manual_path = AiosRunner._manual_input_path(context)
+        if not manual_path.exists():
+            return _default_manual_metadata()
+
+        try:
+            frame = pd.read_csv(manual_path)
+        except Exception as exc:  # pragma: no cover - defensive metadata guard
+            logging.warning("Could not read manual input metadata: %s", exc)
+            return _default_manual_metadata()
+
+        if frame.empty or "date" not in frame.columns or "ticker" not in frame.columns:
+            return _default_manual_metadata()
+
+        normalized = frame.copy()
+        normalized["date"] = pd.to_datetime(
+            normalized["date"],
+            errors="coerce",
+        ).dt.date.astype(str)
+        normalized = normalized[normalized["date"] != "NaT"]
+        if normalized.empty:
+            return _default_manual_metadata()
+
+        latest_date = max(normalized["date"].astype(str))
+        latest_rows = normalized[normalized["date"].astype(str) == latest_date]
+        tickers = sorted(latest_rows["ticker"].astype(str).unique())
+        source = "GitHub Issue"
+        if "input_source" in latest_rows.columns:
+            sources = [
+                str(value).strip()
+                for value in latest_rows["input_source"].dropna().unique()
+                if str(value).strip()
+            ]
+            if sources:
+                source = "+".join(sorted(set(sources)))
+
+        return {
+            "used": True,
+            "latest_date": latest_date,
+            "tickers": tickers,
+            "source": source,
+        }
+
+    @staticmethod
+    def _manual_input_path(context: RunContext) -> Path:
+        if context.manual_input_path is not None:
+            return context.manual_input_path
+        cache_path = AiosRunner._resolve_csv_cache_path(context)
+        if cache_path.parent.name == "cache":
+            return cache_path.parent.parent / "manual" / "daily_manual_prices.csv"
+        return cache_path.parent / "manual" / "daily_manual_prices.csv"
+
+    @staticmethod
     def _build_run_metadata(
         prices,
         provider_used: str,
@@ -350,13 +413,23 @@ class AiosRunner:
         fallback_used: bool,
         provider_by_ticker: dict[str, str] | None = None,
         coverage: CacheCoverageReport | None = None,
+        manual_metadata: dict[str, object] | None = None,
     ) -> RunMetadata:
         provider_by_ticker = provider_by_ticker or {}
+        manual_metadata = manual_metadata or _default_manual_metadata()
         coverage = coverage or build_cache_coverage_report(
             prices=prices,
             required_tickers=required_tickers,
             provider_by_ticker=provider_by_ticker,
         )
+        provider_map = dict(coverage.provider_by_ticker)
+        manual_tickers = [
+            str(ticker) for ticker in manual_metadata.get("tickers", [])
+        ]
+        if manual_metadata.get("used"):
+            for ticker in manual_tickers:
+                if ticker in provider_map:
+                    provider_map[ticker] = "GitHub Issue"
         if prices.empty:
             return RunMetadata(
                 data_source=provider_used,
@@ -370,6 +443,12 @@ class AiosRunner:
                 cache_coverage_percentage=0.0,
                 data_quality_score=0,
                 recommendation_degraded=True,
+                manual_mobile_input_used=bool(manual_metadata.get("used")),
+                latest_manual_input_date=str(
+                    manual_metadata.get("latest_date", "N/A")
+                ),
+                manual_tickers_used=manual_tickers,
+                manual_source=str(manual_metadata.get("source", "None")),
             )
 
         last_update = (
@@ -391,7 +470,7 @@ class AiosRunner:
             data_quality=quality,
             missing_tickers=coverage.missing_tickers,
             fallback_used=fallback_used,
-            provider_by_ticker=coverage.provider_by_ticker,
+            provider_by_ticker=provider_map,
             stale_tickers=coverage.stale_tickers,
             cache_coverage_percentage=coverage.coverage_percentage,
             data_quality_score=coverage.data_quality_score,
@@ -400,6 +479,12 @@ class AiosRunner:
                 or bool(coverage.stale_tickers)
                 or coverage.data_quality_score < 90
             ),
+            manual_mobile_input_used=bool(manual_metadata.get("used")),
+            latest_manual_input_date=str(
+                manual_metadata.get("latest_date", "N/A")
+            ),
+            manual_tickers_used=manual_tickers,
+            manual_source=str(manual_metadata.get("source", "None")),
         )
 
     @staticmethod
@@ -484,3 +569,12 @@ class AiosRunner:
             primary_ticker=primary_ticker,
             current_shares=current_shares,
         )
+
+
+def _default_manual_metadata() -> dict[str, object]:
+    return {
+        "used": False,
+        "latest_date": "N/A",
+        "tickers": [],
+        "source": "None",
+    }

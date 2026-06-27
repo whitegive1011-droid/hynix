@@ -1,0 +1,35 @@
+name: Manual Daily Prices
+description: Submit manual daily prices from mobile when live providers are unavailable.
+title: "Manual Prices YYYY-MM-DD"
+labels: ["manual-prices"]
+body:
+  - type: input
+    id: trading_date
+    attributes:
+      label: Trading date
+      description: Use the market trading date in YYYY-MM-DD format.
+      placeholder: "2026-06-27"
+    validations:
+      required: true
+  - type: textarea
+    id: price_csv
+    attributes:
+      label: Price CSV
+      description: Paste the CSV header and one row per ticker.
+      render: csv
+      value: |
+        date,ticker,close,change_pct,market_cap,source,note
+        2026-06-27,7709.HK,154.00,-14.20,,futu,"HK intraday"
+        2026-06-27,000660.KS,2724000,-8.50,,naver,"SK Hynix"
+        2026-06-27,005930.KS,343500,-4.00,,naver,"Samsung"
+        2026-06-27,MU,1155.00,-4.80,,futu,"overnight"
+    validations:
+      required: true
+  - type: textarea
+    id: market_notes
+    attributes:
+      label: Optional market notes
+      description: Add any context you want preserved with this issue.
+      placeholder: "Market was volatile after..."
+    validations:
+      required: false

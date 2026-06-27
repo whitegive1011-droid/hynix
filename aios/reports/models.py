@@ -125,6 +125,10 @@ def context_to_dict(context: PresentationContext) -> dict[str, Any]:
         "cache_coverage_percentage": context.metadata.cache_coverage_percentage,
         "data_quality_score": context.metadata.data_quality_score,
         "recommendation_degraded": context.metadata.recommendation_degraded,
+        "manual_mobile_input_used": context.metadata.manual_mobile_input_used,
+        "latest_manual_input_date": context.metadata.latest_manual_input_date,
+        "manual_tickers_used": context.metadata.manual_tickers_used,
+        "manual_source": context.metadata.manual_source,
         "data_warnings": context.data_warnings,
         "key_indicators": [
             {
@@ -186,6 +190,12 @@ def _build_data_warnings(context: PresentationContext) -> list[str]:
     if context.metadata.recommendation_degraded:
         warnings.append(
             "Recommendation is degraded because data quality is below the target."
+        )
+    if context.metadata.manual_mobile_input_used:
+        warnings.append(
+            "Manual mobile input was used from "
+            f"{context.metadata.manual_source} on "
+            f"{context.metadata.latest_manual_input_date}."
         )
 
     unavailable_indicators = [
