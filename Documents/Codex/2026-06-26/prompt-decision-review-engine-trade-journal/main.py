@@ -6,7 +6,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from aios.app.cache_seeder import CacheSeeder
+from aios.app.cache_seeder import (
+    CacheSeeder,
+    ManualCacheImporter,
+    ManualCacheTemplate,
+)
 from aios.app.runner import AiosRunner
 
 
@@ -32,6 +36,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Market data provider used for cache seeding.",
     )
     seed_parser.add_argument(
+        "--output",
+        default="data/cache/market_cache.csv",
+        help="CSV cache path to upsert.",
+    )
+
+    template_parser = subparsers.add_parser(
+        "cache-template",
+        help="Create a CSV template for manual market data entry.",
+    )
+    template_parser.add_argument(
+        "--config",
+        default="config.yaml",
+        help="Path to the AIOS config YAML file.",
+    )
+    template_parser.add_argument(
+        "--output",
+        default="data/cache/manual_prices_template.csv",
+        help="Path for the manual price template CSV.",
+    )
+
+    import_parser = subparsers.add_parser(
+        "import-cache",
+        help="Import manually entered market data into the CSV cache.",
+    )
+    import_parser.add_argument(
+        "--config",
+        default="config.yaml",
+        help="Path to the AIOS config YAML file.",
+    )
+    import_parser.add_argument(
+        "--input",
+        required=True,
+        help="Manual price CSV to import.",
+    )
+    import_parser.add_argument(
         "--output",
         default="data/cache/market_cache.csv",
         help="CSV cache path to upsert.",
@@ -83,6 +122,17 @@ def main(argv: list[str] | None = None) -> int:
         return CacheSeeder(
             config_path=Path(args.config),
             provider_name=args.provider,
+            output_path=Path(args.output),
+        ).run()
+    if args.command == "cache-template":
+        return ManualCacheTemplate(
+            config_path=Path(args.config),
+            output_path=Path(args.output),
+        ).run()
+    if args.command == "import-cache":
+        return ManualCacheImporter(
+            config_path=Path(args.config),
+            input_path=Path(args.input),
             output_path=Path(args.output),
         ).run()
 
