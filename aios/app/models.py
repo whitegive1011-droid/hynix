@@ -40,3 +40,8 @@ class RunMetadata:
     missing_tickers: list[str]
     fallback_used: bool = False
     execution_time_seconds: float = 0.0
+    provider_by_ticker: dict[str, str] | None = None
+    stale_tickers: list[str] | None = None
+    cache_coverage_percentage: float = 0.0
+    data_quality_score: int = 0
+    recommendation_degraded: bool = False

@@ -22,9 +22,13 @@ def write_deployment_summary(
         f"Provider Used: {metadata.provider_used}",
         f"Data Source: {metadata.data_source}",
         f"Data Quality: {metadata.data_quality}",
+        f"Data Quality Score: {metadata.data_quality_score}",
         f"Last Update: {metadata.last_update}",
         f"Fallback Used: {metadata.fallback_used}",
         f"Missing Tickers: {', '.join(metadata.missing_tickers) or 'None'}",
+        f"Stale Tickers: {', '.join(metadata.stale_tickers or []) or 'None'}",
+        f"Cache Coverage: {metadata.cache_coverage_percentage:.2f}%",
+        f"Recommendation Degraded: {metadata.recommendation_degraded}",
         f"Test Result: {test_result}",
         f"Deployment Status: {deployment_status}",
     ]

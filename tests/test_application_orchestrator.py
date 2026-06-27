@@ -100,7 +100,7 @@ cash:
 
     workbook = load_workbook(output_dir / "investment_dashboard.xlsx")
     assert workbook["Dashboard"]["B4"].value == "csv"
-    assert workbook["Dashboard"]["B7"].value == signal["recommendation"]
+    assert workbook["Dashboard"]["B10"].value == signal["recommendation"]
 
     history = pd.read_csv(output_dir / "history.csv")
     assert set(history["ticker"]) == {"HBM1", "HBM2", "AI1", "AI2"}
@@ -349,6 +349,48 @@ cash:
     assert signal["missing_tickers"] == []
     history = pd.read_csv(output_dir / "history.csv")
     assert set(history["ticker"]) == {"HBM1", "AI1"}
+
+
+def test_seed_cache_upserts_without_duplicate_rows(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    source_csv = _write_orchestrator_fixture(tmp_path)
+    cache_csv = tmp_path / "market_cache.csv"
+    config_path = tmp_path / "config.yaml"
+
+    config_path.write_text(
+        f"""
+data:
+  primary_provider: csv
+  csv_path: {source_csv}
+  lookback_days: 60
+  required_tickers:
+    - HBM1
+    - AI1
+    - MISSING
+""",
+        encoding="utf-8",
+    )
+
+    args = [
+        "seed-cache",
+        "--config",
+        str(config_path),
+        "--provider",
+        "csv",
+        "--output",
+        str(cache_csv),
+    ]
+    assert main(args) == 0
+    assert main(args) == 0
+
+    cache = pd.read_csv(cache_csv)
+    assert set(cache["ticker"]) == {"HBM1", "AI1"}
+    assert cache.duplicated(["date", "ticker"]).sum() == 0
+    captured = capsys.readouterr()
+    assert "Missing tickers: MISSING" in captured.out
+    assert "Coverage: 66.67%" in captured.out
 
 
 def _write_orchestrator_fixture(tmp_path: Path) -> Path:

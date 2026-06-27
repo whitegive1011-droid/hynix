@@ -253,6 +253,18 @@
               <span>Data Quality</span>
               <strong class="quality">{{ signal.data_quality }}</strong>
             </div>
+            <div class="metric">
+              <span>Data Quality Score</span>
+              <strong>{{ signal.data_quality_score }}</strong>
+            </div>
+            <div class="metric">
+              <span>Cache Coverage</span>
+              <strong>{{ signal.cache_coverage_percentage }}%</strong>
+            </div>
+            <div class="metric">
+              <span>Degraded</span>
+              <strong>{{ signal.recommendation_degraded }}</strong>
+            </div>
           </div>
         </section>
 
@@ -274,6 +286,20 @@
           <li>{{ warning }}</li>
           {% endfor %}
         </ul>
+      </section>
+      {% endif %}
+
+      {% if signal.provider_by_ticker %}
+      <section style="margin-top: 16px;">
+        <h2>Provider Attribution</h2>
+        <div class="indicator-list">
+          {% for ticker, provider in signal.provider_by_ticker.items() %}
+          <div class="indicator">
+            <span class="label">{{ ticker }}</span>
+            <span class="value">{{ provider }}</span>
+          </div>
+          {% endfor %}
+        </div>
       </section>
       {% endif %}
 

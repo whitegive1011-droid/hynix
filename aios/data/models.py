@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas as pd
 
@@ -43,6 +43,42 @@ class MarketDataRequest:
 
     tickers: list[str]
     lookback_days: int
+
+
+@dataclass(frozen=True)
+class TickerCoverage:
+    """Coverage details for one ticker in a cache or fetch result."""
+
+    ticker: str
+    rows: int
+    first_date: str
+    last_date: str
+    provider: str = "unknown"
+
+
+@dataclass(frozen=True)
+class CacheCoverageReport:
+    """Coverage and freshness report for required market data."""
+
+    required_tickers: list[str]
+    available_tickers: list[str]
+    missing_tickers: list[str]
+    stale_tickers: list[str]
+    coverage_percentage: float
+    data_quality_score: int
+    date_ranges: dict[str, tuple[str, str]] = field(default_factory=dict)
+    last_available_dates: dict[str, str] = field(default_factory=dict)
+    provider_by_ticker: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class MarketDataResult:
+    """Market data plus operational metadata from one or more providers."""
+
+    prices: pd.DataFrame
+    provider_mix: str
+    provider_by_ticker: dict[str, str]
+    coverage: CacheCoverageReport
 
 
 def prepare_history_frame(

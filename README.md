@@ -6,14 +6,17 @@ Version: `v0.1`
 
 ## What It Does
 
-- Fetches market data with `yfinance`
-- Retries failed market data downloads
-- Falls back to a committed CSV cache when Yahoo is unavailable
+- Fetches market data through a multi-source provider
+- Tries `yfinance`, Stooq, optional API providers, and CSV cache fallback
+- Retries failed market data downloads where configured
+- Falls back to a committed CSV cache when live providers are unavailable
 - Calculates indicators and AI/HBM basket metrics
 - Generates an explainable rule-based recommendation
 - Produces `latest_signal.json`, `investment_dashboard.xlsx`, `dashboard.html`, `history.csv`, `execution.log`, and `deployment_summary.txt`
 
-AIOS does not place trades and does not use API keys or secrets.
+AIOS does not place trades. No API keys are required for the default setup.
+Optional Alpha Vantage and Finnhub keys can be provided through environment
+variables and must not be committed.
 
 ## Local Setup
 
@@ -48,6 +51,22 @@ Offline CSV run:
   --no-input
 ```
 
+Seed the local market cache:
+
+```bash
+.venv/bin/python main.py seed-cache \
+  --provider stooq \
+  --output data/cache/market_cache.csv
+```
+
+For Yahoo seeding:
+
+```bash
+.venv/bin/python main.py seed-cache \
+  --provider yfinance \
+  --output data/cache/market_cache.csv
+```
+
 Dry run:
 
 ```bash
@@ -72,9 +91,17 @@ If `portfolio.yaml` is missing, AIOS uses safe defaults with zero positions.
 
 ## Data Fallback
 
-The default provider is `yfinance`.
+The default provider is `multi`.
 
-If Yahoo fails or returns no data, AIOS falls back to:
+Provider priority:
+
+1. `yfinance`
+2. `stooq` for supported US tickers
+3. `alphavantage` when `ALPHAVANTAGE_API_KEY` exists
+4. `finnhub` when `FINNHUB_API_KEY` exists
+5. CSV cache
+
+If live providers fail or return partial data, AIOS falls back to:
 
 ```text
 data/cache/market_cache.csv
@@ -85,6 +112,11 @@ The dashboard displays:
 - Data Source
 - Last Update
 - Data Quality
+- Data Quality Score
+- Cache Coverage
+- Missing Tickers
+- Stale Tickers
+- Provider Attribution
 
 ## Output Files
 

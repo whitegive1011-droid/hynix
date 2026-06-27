@@ -44,7 +44,7 @@ class AppConfig:
 
 @dataclass(frozen=True)
 class DataConfig:
-    primary_provider: str = "yfinance"
+    primary_provider: str = "multi"
     fallback_provider: str = "csv"
     lookback_days: int = 260
     required_tickers: list[str] = field(default_factory=list)

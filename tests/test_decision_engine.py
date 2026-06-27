@@ -11,6 +11,7 @@ from aios.data.providers import CsvMarketDataProvider
 from aios.decision.engine import DecisionEngine
 from aios.decision.models import (
     BasketSnapshot,
+    DecisionDataQuality,
     DecisionInput,
     MarketMode,
     PortfolioPosition,
@@ -185,6 +186,35 @@ def test_mixed_recommends_uncertain() -> None:
     assert result.confidence < load_config("config.yaml").decision.uncertain_confidence_below
 
 
+def test_low_data_quality_forces_uncertain_without_position_change() -> None:
+    result = _engine().decide(
+        _input(
+            basket=_basket(ai_5d=4, hbm_5d=5, relative_ratio=1.05),
+            technical=_technical(
+                close=120,
+                sma_20=110,
+                sma_50=100,
+                rsi14=62,
+                macd=3,
+                macd_signal=1,
+                adx14=28,
+            ),
+            shares=300,
+            data_quality=DecisionDataQuality(
+                missing_tickers=["AI1"],
+                data_quality_score=40,
+                required_basket_tickers_missing=True,
+            ),
+        )
+    )
+
+    assert result.market_mode == MarketMode.MIXED
+    assert result.recommendation == "Uncertain"
+    assert result.suggested_position == 300
+    assert result.position_delta == 0
+    assert "data_quality.insufficient" in result.triggered_rules
+
+
 def test_decision_engine_accepts_csv_provider_outputs(tmp_path: Path) -> None:
     csv_path = _write_decision_fixture(tmp_path)
     prices = CsvMarketDataProvider(csv_path).fetch(
@@ -232,11 +262,13 @@ def _input(
     basket: BasketSnapshot,
     technical: TechnicalSnapshot,
     shares: int,
+    data_quality: DecisionDataQuality | None = None,
 ) -> DecisionInput:
     return DecisionInput(
         basket=basket,
         technical=technical,
         position=PortfolioPosition(ticker="7709.HK", current_shares=shares),
+        data_quality=data_quality or DecisionDataQuality(),
     )
 
 
