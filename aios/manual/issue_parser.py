@@ -70,8 +70,8 @@ class ManualPriceIssueRows:
     def latest_date(self) -> str:
         return max(self.rows["date"].astype(str))
 
-    def to_cache_frame(self) -> pd.DataFrame:
-        return manual_issue_rows_to_cache_frame(self.rows)
+    def to_cache_frame(self, rows: pd.DataFrame | None = None) -> pd.DataFrame:
+        return manual_issue_rows_to_cache_frame(self.rows if rows is None else rows)
 
 
 def parse_manual_price_issue(body: str) -> ManualPriceIssueRows:

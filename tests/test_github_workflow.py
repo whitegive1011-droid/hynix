@@ -49,6 +49,7 @@ def test_manual_price_issue_workflow_imports_and_deploys() -> None:
     assert "python -m pytest" in workflow
     assert "data/manual/daily_manual_prices.csv" in workflow
     assert "data/cache/market_cache.csv" in workflow
+    assert "data/proxy/tradable_proxy_prices.csv" in workflow
     assert "actions/deploy-pages@v4" in workflow
     assert "gh issue comment" in workflow
     assert "--field state=closed" in workflow
