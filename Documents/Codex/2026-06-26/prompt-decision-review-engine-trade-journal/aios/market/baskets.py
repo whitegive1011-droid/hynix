@@ -60,9 +60,9 @@ def calculate_basket_metrics(
     metrics["D20"] = metrics["HBM_20D"] - metrics["AI_20D"]
     metrics["Relative_Ratio"] = metrics["HBM_Basket"] / metrics["AI_Basket"]
     metrics["Risk_Score"] = (
-        metrics["AI_5D"].apply(lambda value: max(0.0, -value))
-        + metrics["HBM_5D"].apply(lambda value: max(0.0, value))
-        + metrics["D5"].apply(lambda value: max(0.0, value - 10.0))
+        (-metrics["AI_5D"]).clip(lower=0)
+        + metrics["HBM_5D"].clip(lower=0)
+        + (metrics["D5"] - 10.0).clip(lower=0)
     )
     metrics["Risk_Score"] = metrics["Risk_Score"].replace([np.inf, -np.inf], np.nan)
 

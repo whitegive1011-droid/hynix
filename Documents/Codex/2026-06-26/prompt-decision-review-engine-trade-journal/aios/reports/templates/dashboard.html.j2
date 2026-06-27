@@ -160,6 +160,15 @@
         color: var(--accent);
       }
 
+      .warnings {
+        margin-top: 16px;
+        border-color: #fbbf24;
+      }
+
+      .warnings h2 {
+        color: #fde68a;
+      }
+
       @media (max-width: 760px) {
         main {
           width: min(100% - 20px, 680px);
@@ -230,7 +239,7 @@
             </div>
             <div class="metric">
               <span>Risk Score</span>
-              <strong>{{ signal.risk_score }}</strong>
+              <strong>{{ signal.risk_score_display }}</strong>
             </div>
             <div class="metric">
               <span>Data Source</span>
@@ -256,6 +265,17 @@
           </ul>
         </section>
       </div>
+
+      {% if signal.data_warnings %}
+      <section class="warnings">
+        <h2>Data Quality Warnings</h2>
+        <ul>
+          {% for warning in signal.data_warnings %}
+          <li>{{ warning }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
 
       <section style="margin-top: 16px;">
         <h2>Key Indicators</h2>

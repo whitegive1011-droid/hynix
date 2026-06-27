@@ -8,11 +8,13 @@ import time
 from dataclasses import replace
 from pathlib import Path
 
+import pandas as pd
+
 from aios.app.context import RunContext
 from aios.app.models import MarketState, PortfolioState, RunMetadata
 from aios.config.loader import load_config, load_portfolio
 from aios.config.models import PortfolioConfig
-from aios.data.models import MarketDataRequest, prepare_history_frame
+from aios.data.models import MarketDataRequest, PRICE_COLUMNS, prepare_history_frame
 from aios.data.providers import create_market_data_provider
 from aios.decision.engine import DecisionEngine
 from aios.decision.models import (
@@ -196,20 +198,37 @@ class AiosRunner:
 
         provider_used = context.config.data.primary_provider
         fallback_used = False
-        if prices.empty and context.config.data.primary_provider == "yfinance":
+        missing_tickers = self._missing_tickers(
+            prices,
+            context.config.data.required_tickers,
+        )
+        if missing_tickers and context.config.data.primary_provider == "yfinance":
             fallback_path = self._resolve_csv_cache_path(context)
             logging.warning(
-                "Primary provider returned no data. Falling back to CSV cache: %s",
+                "Primary provider missing %s tickers. Falling back to CSV cache: %s",
+                len(missing_tickers),
                 fallback_path,
             )
-            prices = self._fetch_with_retry(
+            fallback_request = MarketDataRequest(
+                tickers=missing_tickers,
+                lookback_days=context.config.data.lookback_days,
+            )
+            fallback_prices = self._fetch_with_retry(
                 provider_name=context.config.data.fallback_provider,
-                request=request,
+                request=fallback_request,
                 csv_path=fallback_path,
                 attempts=1,
                 retry_delay_seconds=0,
             )
-            provider_used = context.config.data.fallback_provider
+            if prices.empty:
+                prices = fallback_prices
+                provider_used = context.config.data.fallback_provider
+            elif not fallback_prices.empty:
+                prices = self._merge_price_frames(prices, fallback_prices)
+                provider_used = (
+                    f"{context.config.data.primary_provider}+"
+                    f"{context.config.data.fallback_provider}"
+                )
             fallback_used = True
 
         metadata = self._build_run_metadata(
@@ -221,6 +240,32 @@ class AiosRunner:
         logging.info("Provider used: %s", metadata.provider_used)
         logging.info("Data quality: %s", metadata.data_quality)
         return prices, metadata
+
+    @staticmethod
+    def _missing_tickers(prices, required_tickers: list[str]) -> list[str]:
+        if prices.empty:
+            return list(required_tickers)
+        available_tickers = set(prices["ticker"].astype(str).unique())
+        return [ticker for ticker in required_tickers if ticker not in available_tickers]
+
+    @staticmethod
+    def _merge_price_frames(primary_prices, fallback_prices):
+        if primary_prices.empty:
+            return fallback_prices
+        if fallback_prices.empty:
+            return primary_prices
+
+        combined = pd.concat(
+            [primary_prices[PRICE_COLUMNS], fallback_prices[PRICE_COLUMNS]],
+            ignore_index=True,
+        )
+        combined["date"] = pd.to_datetime(combined["date"]).dt.date.astype(str)
+        combined["ticker"] = combined["ticker"].astype(str)
+        return (
+            combined.sort_values(["ticker", "date"])
+            .drop_duplicates(subset=["date", "ticker"], keep="first")
+            .reset_index(drop=True)
+        )
 
     def _fetch_with_retry(
         self,

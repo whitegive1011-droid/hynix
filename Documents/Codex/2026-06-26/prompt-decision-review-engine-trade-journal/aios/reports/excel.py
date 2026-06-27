@@ -64,6 +64,7 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
         ("Position Delta", decision.position_delta),
         ("Relative Ratio", context.basket.relative_ratio),
         ("Risk Score", context.basket.risk_score),
+        ("Missing Tickers", ", ".join(context.metadata.missing_tickers) or "None"),
     ]
     _write_key_value_rows(sheet, rows, start_row=3)
 
@@ -85,7 +86,7 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
     _apply_dashboard_conditional_formatting(sheet)
     _add_indicator_chart(sheet, context)
     sheet.freeze_panes = "A3"
-    sheet.auto_filter.ref = "A3:B15"
+    sheet.auto_filter.ref = f"A3:B{3 + len(rows) - 1}"
 
 
 def _render_indicators_sheet(sheet, context: PresentationContext) -> None:
@@ -102,6 +103,13 @@ def _render_reasons_sheet(sheet, context: PresentationContext) -> None:
     sheet.append(["Rank", "Reason"])
     for index, reason in enumerate(context.top_reasons, start=1):
         sheet.append([index, reason])
+
+    if context.data_warnings:
+        sheet.append([])
+        sheet.append(["Data Quality Warnings", ""])
+        for warning in context.data_warnings:
+            sheet.append(["Warning", warning])
+
     sheet.freeze_panes = "A2"
     sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
     _style_table_sheet(sheet)

@@ -34,6 +34,7 @@ def test_context_to_dict_renders_decision_without_recalculating() -> None:
     assert payload["data_source"] == "csv"
     assert payload["last_update"] == "2026-06-26"
     assert payload["data_quality"] == "OK"
+    assert payload["data_warnings"] == []
     assert payload["top_reasons"] == [
         "Market classified as Uptrend.",
         "Trend rules favor holding the current position.",
@@ -78,7 +79,7 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert dashboard["B9"].value == "Low"
     assert dashboard["B10"].value == "Uptrend"
     assert dashboard.freeze_panes == "A3"
-    assert dashboard.auto_filter.ref == "A3:B15"
+    assert dashboard.auto_filter.ref == "A3:B16"
     assert len(dashboard._charts) == 1
     assert len(list(dashboard.conditional_formatting)) > 0
 
@@ -92,7 +93,31 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert reasons["B2"].value == "Market classified as Uptrend."
 
 
-def _presentation_context():
+def test_data_quality_warnings_are_rendered_for_missing_inputs() -> None:
+    context = _presentation_context(
+        basket=BasketSnapshot(date="2026-06-26"),
+        metadata=RunMetadata(
+            data_source="csv",
+            provider_used="csv",
+            last_update="2026-06-26",
+            data_quality="Degraded",
+            missing_tickers=["MSFT", "000660.KS"],
+            fallback_used=True,
+        ),
+    )
+
+    payload = context_to_dict(context)
+
+    assert payload["risk_score_display"] == "N/A"
+    assert payload["relative_ratio_display"] == "N/A"
+    assert "MSFT" in payload["data_warnings"][1]
+    assert "Risk Score" in payload["data_warnings"][2]
+
+
+def _presentation_context(
+    basket: BasketSnapshot | None = None,
+    metadata: RunMetadata | None = None,
+):
     decision = DecisionResult(
         date="2026-06-26",
         market_mode=MarketMode.UPTREND,
@@ -108,7 +133,7 @@ def _presentation_context():
         position_delta=0,
         triggered_rules=["classification.uptrend", "position.hold_trend"],
     )
-    basket = BasketSnapshot(
+    basket = basket or BasketSnapshot(
         date="2026-06-26",
         ai_1d=1.2,
         ai_5d=4.1,
@@ -141,7 +166,7 @@ def _presentation_context():
         basket=basket,
         technical=technical,
         portfolio=portfolio,
-        metadata=RunMetadata(
+        metadata=metadata or RunMetadata(
             data_source="csv",
             provider_used="csv",
             last_update="2026-06-26",

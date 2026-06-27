@@ -50,6 +50,31 @@ def test_calculate_basket_metrics_from_csv_fixture(tmp_path: Path) -> None:
     assert latest["Risk_Score"] == pytest.approx(risk_score)
 
 
+def test_risk_score_is_nan_when_forward_inputs_are_missing() -> None:
+    start = date(2026, 1, 1)
+    rows = []
+    for offset in range(5):
+        rows.extend(
+            [
+                _row(start, offset, "AI1", 100 + offset),
+                _row(start, offset, "HBM1", 110 + offset),
+            ]
+        )
+    prices = pd.DataFrame(rows)
+
+    metrics = calculate_basket_metrics(
+        prices,
+        ai_tickers=["AI1"],
+        hbm_weights={"HBM1": 1.0},
+    )
+    latest = metrics.iloc[-1]
+
+    assert pd.isna(latest["AI_5D"])
+    assert pd.isna(latest["HBM_5D"])
+    assert pd.isna(latest["D5"])
+    assert pd.isna(latest["Risk_Score"])
+
+
 def _write_basket_fixture(tmp_path: Path) -> Path:
     start = date(2026, 1, 1)
     rows = []

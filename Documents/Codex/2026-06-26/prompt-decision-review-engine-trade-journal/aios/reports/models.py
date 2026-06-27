@@ -46,6 +46,10 @@ class PresentationContext:
     def top_reasons(self) -> list[str]:
         return self.decision.reasons[:5]
 
+    @property
+    def data_warnings(self) -> list[str]:
+        return _build_data_warnings(self)
+
 
 @dataclass(frozen=True)
 class PresentationOutputPaths:
@@ -108,12 +112,15 @@ def context_to_dict(context: PresentationContext) -> dict[str, Any]:
         "triggered_rules": decision.triggered_rules,
         "relative_ratio": context.basket.relative_ratio,
         "risk_score": context.basket.risk_score,
+        "relative_ratio_display": _indicator_display(context, "Relative Ratio"),
+        "risk_score_display": _indicator_display(context, "Risk Score"),
         "data_source": context.metadata.data_source,
         "provider_used": context.metadata.provider_used,
         "last_update": context.metadata.last_update,
         "data_quality": context.metadata.data_quality,
         "fallback_used": context.metadata.fallback_used,
         "missing_tickers": context.metadata.missing_tickers,
+        "data_warnings": context.data_warnings,
         "key_indicators": [
             {
                 "label": indicator.label,
@@ -146,3 +153,35 @@ def _indicator(
         value=value,
         display_value=f"{value:.{precision}f}{suffix}",
     )
+
+
+def _indicator_display(context: PresentationContext, label: str) -> str:
+    for indicator in context.key_indicators:
+        if indicator.label == label:
+            return indicator.display_value
+    return "N/A"
+
+
+def _build_data_warnings(context: PresentationContext) -> list[str]:
+    warnings: list[str] = []
+    if context.metadata.fallback_used:
+        warnings.append(
+            "Fallback market data provider was used; review recommendation confidence."
+        )
+    if context.metadata.missing_tickers:
+        warnings.append(
+            "Missing market data for required tickers: "
+            + ", ".join(context.metadata.missing_tickers)
+        )
+
+    unavailable_indicators = [
+        indicator.label
+        for indicator in context.key_indicators
+        if indicator.value is None
+    ]
+    if unavailable_indicators:
+        warnings.append(
+            "Unavailable indicators due to insufficient source data: "
+            + ", ".join(unavailable_indicators)
+        )
+    return warnings
