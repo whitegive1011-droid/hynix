@@ -51,6 +51,20 @@
   "latest_manual_input_date": "N/A",
   "manual_tickers_used": [],
   "manual_source": "None",
+  "decision_influenced_by_proxy": false,
+  "proxy_intraday_signal": {
+    "available": false,
+    "provider_used": "none",
+    "symbols_used": {},
+    "tickers_covered": [],
+    "proxy_ai_1d_change": null,
+    "proxy_hbm_1d_change": null,
+    "proxy_risk_level": "N/A",
+    "proxy_data_quality": "Missing",
+    "proxy_official_conflict_flag": false,
+    "warning": "Tradable proxy price is not official equity market data.",
+    "decision_influenced": false
+  },
   "data_warnings": [
     "Fallback market data provider was used; review recommendation confidence.",
     "Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX",
