@@ -96,10 +96,21 @@ class PortfolioPosition:
 
 
 @dataclass(frozen=True)
+class DecisionDataQuality:
+    """Data quality context used to guard recommendations."""
+
+    missing_tickers: list[str] = field(default_factory=list)
+    stale_tickers: list[str] = field(default_factory=list)
+    data_quality_score: int = 100
+    required_basket_tickers_missing: bool = False
+
+
+@dataclass(frozen=True)
 class DecisionInput:
     basket: BasketSnapshot
     technical: TechnicalSnapshot
     position: PortfolioPosition
+    data_quality: DecisionDataQuality = field(default_factory=DecisionDataQuality)
 
 
 @dataclass(frozen=True)

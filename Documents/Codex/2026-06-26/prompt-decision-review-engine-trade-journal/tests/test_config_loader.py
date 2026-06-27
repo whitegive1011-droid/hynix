@@ -10,7 +10,7 @@ def test_load_default_config_file() -> None:
 
     assert config.app.timezone == "Asia/Shanghai"
     assert config.app.output_dir == Path("outputs")
-    assert config.data.primary_provider == "yfinance"
+    assert config.data.primary_provider == "multi"
     assert config.data.fallback_provider == "csv"
     assert config.data.csv_path == Path("data/cache/market_cache.csv")
     assert config.data.retry_attempts == 2

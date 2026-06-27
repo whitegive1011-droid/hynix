@@ -120,6 +120,11 @@ def context_to_dict(context: PresentationContext) -> dict[str, Any]:
         "data_quality": context.metadata.data_quality,
         "fallback_used": context.metadata.fallback_used,
         "missing_tickers": context.metadata.missing_tickers,
+        "stale_tickers": context.metadata.stale_tickers or [],
+        "provider_by_ticker": context.metadata.provider_by_ticker or {},
+        "cache_coverage_percentage": context.metadata.cache_coverage_percentage,
+        "data_quality_score": context.metadata.data_quality_score,
+        "recommendation_degraded": context.metadata.recommendation_degraded,
         "data_warnings": context.data_warnings,
         "key_indicators": [
             {
@@ -172,6 +177,15 @@ def _build_data_warnings(context: PresentationContext) -> list[str]:
         warnings.append(
             "Missing market data for required tickers: "
             + ", ".join(context.metadata.missing_tickers)
+        )
+    if context.metadata.stale_tickers:
+        warnings.append(
+            "Stale market data detected for tickers: "
+            + ", ".join(context.metadata.stale_tickers)
+        )
+    if context.metadata.recommendation_degraded:
+        warnings.append(
+            "Recommendation is degraded because data quality is below the target."
         )
 
     unavailable_indicators = [

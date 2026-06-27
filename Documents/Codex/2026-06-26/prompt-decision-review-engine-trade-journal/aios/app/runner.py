@@ -14,11 +14,18 @@ from aios.app.context import RunContext
 from aios.app.models import MarketState, PortfolioState, RunMetadata
 from aios.config.loader import load_config, load_portfolio
 from aios.config.models import PortfolioConfig
-from aios.data.models import MarketDataRequest, PRICE_COLUMNS, prepare_history_frame
+from aios.data.models import (
+    CacheCoverageReport,
+    MarketDataRequest,
+    PRICE_COLUMNS,
+    prepare_history_frame,
+)
 from aios.data.providers import create_market_data_provider
+from aios.data.quality import build_cache_coverage_report, data_quality_label
 from aios.decision.engine import DecisionEngine
 from aios.decision.models import (
     BasketSnapshot,
+    DecisionDataQuality,
     DecisionInput,
     TechnicalSnapshot,
 )
@@ -146,6 +153,7 @@ class AiosRunner:
             basket=market_state.basket,
             technical=market_state.technical,
             position=portfolio_state.to_position(),
+            data_quality=self._decision_data_quality(context, metadata),
         )
         decision = DecisionEngine(context.config.decision).decide(decision_input)
         presentation = build_presentation_context(
@@ -188,6 +196,29 @@ class AiosRunner:
             tickers=context.config.data.required_tickers,
             lookback_days=context.config.data.lookback_days,
         )
+        if context.config.data.primary_provider == "multi":
+            provider = create_market_data_provider(
+                "multi",
+                csv_path=self._resolve_csv_cache_path(context),
+            )
+            logging.info(
+                "Fetching market data from multi-source provider for %s tickers.",
+                len(request.tickers),
+            )
+            if hasattr(provider, "fetch_result"):
+                result = provider.fetch_result(request)
+                metadata = self._build_run_metadata(
+                    prices=result.prices,
+                    provider_used=result.provider_mix,
+                    required_tickers=context.config.data.required_tickers,
+                    fallback_used=result.provider_mix not in {"none", "yfinance"},
+                    provider_by_ticker=result.provider_by_ticker,
+                    coverage=result.coverage,
+                )
+                logging.info("Provider used: %s", metadata.provider_used)
+                logging.info("Data quality: %s", metadata.data_quality)
+                return result.prices, metadata
+
         prices = self._fetch_with_retry(
             provider_name=context.config.data.primary_provider,
             request=request,
@@ -317,7 +348,15 @@ class AiosRunner:
         provider_used: str,
         required_tickers: list[str],
         fallback_used: bool,
+        provider_by_ticker: dict[str, str] | None = None,
+        coverage: CacheCoverageReport | None = None,
     ) -> RunMetadata:
+        provider_by_ticker = provider_by_ticker or {}
+        coverage = coverage or build_cache_coverage_report(
+            prices=prices,
+            required_tickers=required_tickers,
+            provider_by_ticker=provider_by_ticker,
+        )
         if prices.empty:
             return RunMetadata(
                 data_source=provider_used,
@@ -326,27 +365,55 @@ class AiosRunner:
                 data_quality="Failed",
                 missing_tickers=required_tickers,
                 fallback_used=fallback_used,
+                provider_by_ticker={},
+                stale_tickers=[],
+                cache_coverage_percentage=0.0,
+                data_quality_score=0,
+                recommendation_degraded=True,
             )
 
-        available_tickers = set(prices["ticker"].astype(str).unique())
-        missing_tickers = [
-            ticker for ticker in required_tickers if ticker not in available_tickers
-        ]
-        last_update = str(max(prices["date"].astype(str)))
-        if missing_tickers:
-            data_quality = "Degraded"
-        elif fallback_used:
-            data_quality = "Fallback"
-        else:
-            data_quality = "OK"
+        last_update = (
+            max(coverage.last_available_dates.values())
+            if coverage.last_available_dates
+            else str(max(prices["date"].astype(str)))
+        )
+        quality = data_quality_label(
+            coverage.data_quality_score,
+            coverage.missing_tickers,
+        )
+        if fallback_used and quality == "OK":
+            quality = "Fallback"
 
         return RunMetadata(
             data_source=provider_used,
             provider_used=provider_used,
             last_update=last_update,
-            data_quality=data_quality,
-            missing_tickers=missing_tickers,
+            data_quality=quality,
+            missing_tickers=coverage.missing_tickers,
             fallback_used=fallback_used,
+            provider_by_ticker=coverage.provider_by_ticker,
+            stale_tickers=coverage.stale_tickers,
+            cache_coverage_percentage=coverage.coverage_percentage,
+            data_quality_score=coverage.data_quality_score,
+            recommendation_degraded=(
+                bool(coverage.missing_tickers)
+                or bool(coverage.stale_tickers)
+                or coverage.data_quality_score < 90
+            ),
+        )
+
+    @staticmethod
+    def _decision_data_quality(
+        context: RunContext,
+        metadata: RunMetadata,
+    ) -> DecisionDataQuality:
+        basket_tickers = set(context.config.baskets.ai) | set(context.config.baskets.hbm)
+        missing = set(metadata.missing_tickers)
+        return DecisionDataQuality(
+            missing_tickers=metadata.missing_tickers,
+            stale_tickers=metadata.stale_tickers or [],
+            data_quality_score=metadata.data_quality_score,
+            required_basket_tickers_missing=bool(basket_tickers & missing),
         )
 
     @staticmethod

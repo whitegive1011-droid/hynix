@@ -55,6 +55,9 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
         ("Data Source", context.metadata.data_source),
         ("Last Update", context.metadata.last_update),
         ("Data Quality", context.metadata.data_quality),
+        ("Data Quality Score", context.metadata.data_quality_score),
+        ("Cache Coverage %", context.metadata.cache_coverage_percentage),
+        ("Recommendation Degraded", context.metadata.recommendation_degraded),
         ("Today's Recommendation", decision.recommendation),
         ("Confidence", decision.confidence),
         ("Risk Level", decision.risk_level.value),
@@ -65,6 +68,7 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
         ("Relative Ratio", context.basket.relative_ratio),
         ("Risk Score", context.basket.risk_score),
         ("Missing Tickers", ", ".join(context.metadata.missing_tickers) or "None"),
+        ("Stale Tickers", ", ".join(context.metadata.stale_tickers or []) or "None"),
     ]
     _write_key_value_rows(sheet, rows, start_row=3)
 

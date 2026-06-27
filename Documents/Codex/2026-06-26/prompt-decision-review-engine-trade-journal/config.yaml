@@ -5,7 +5,7 @@ app:
   run_mode: daily
 
 data:
-  primary_provider: yfinance
+  primary_provider: multi
   fallback_provider: csv
   csv_path: data/cache/market_cache.csv
   retry_attempts: 2

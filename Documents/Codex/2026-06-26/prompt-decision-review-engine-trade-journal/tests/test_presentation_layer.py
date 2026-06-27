@@ -74,12 +74,15 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert dashboard["B4"].value == "csv"
     assert dashboard["B5"].value == "2026-06-26"
     assert dashboard["B6"].value == "OK"
-    assert dashboard["B7"].value == "Hold"
-    assert dashboard["B8"].value == 72
-    assert dashboard["B9"].value == "Low"
-    assert dashboard["B10"].value == "Uptrend"
+    assert dashboard["B7"].value == 100
+    assert dashboard["B8"].value == 100.0
+    assert dashboard["B9"].value is False
+    assert dashboard["B10"].value == "Hold"
+    assert dashboard["B11"].value == 72
+    assert dashboard["B12"].value == "Low"
+    assert dashboard["B13"].value == "Uptrend"
     assert dashboard.freeze_panes == "A3"
-    assert dashboard.auto_filter.ref == "A3:B16"
+    assert dashboard.auto_filter.ref == "A3:B20"
     assert len(dashboard._charts) == 1
     assert len(list(dashboard.conditional_formatting)) > 0
 
@@ -103,6 +106,9 @@ def test_data_quality_warnings_are_rendered_for_missing_inputs() -> None:
             data_quality="Degraded",
             missing_tickers=["MSFT", "000660.KS"],
             fallback_used=True,
+            data_quality_score=40,
+            cache_coverage_percentage=50.0,
+            recommendation_degraded=True,
         ),
     )
 
@@ -111,7 +117,7 @@ def test_data_quality_warnings_are_rendered_for_missing_inputs() -> None:
     assert payload["risk_score_display"] == "N/A"
     assert payload["relative_ratio_display"] == "N/A"
     assert "MSFT" in payload["data_warnings"][1]
-    assert "Risk Score" in payload["data_warnings"][2]
+    assert "Risk Score" in payload["data_warnings"][3]
 
 
 def _presentation_context(
@@ -172,5 +178,7 @@ def _presentation_context(
             last_update="2026-06-26",
             data_quality="OK",
             missing_tickers=[],
+            data_quality_score=100,
+            cache_coverage_percentage=100.0,
         ),
     )

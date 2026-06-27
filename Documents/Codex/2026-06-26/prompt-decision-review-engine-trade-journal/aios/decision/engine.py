@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from aios.config.models import DecisionConfig
 from aios.decision.models import (
     BasketSnapshot,
+    DecisionDataQuality,
     DecisionInput,
     DecisionResult,
     MarketMode,
@@ -22,6 +23,9 @@ class DecisionEngine:
     config: DecisionConfig
 
     def decide(self, decision_input: DecisionInput) -> DecisionResult:
+        if self._requires_uncertain_decision(decision_input.data_quality):
+            return self._uncertain_for_data_quality(decision_input)
+
         mode, classification_reasons, triggered_rules = self.classify_market(
             decision_input.basket,
             decision_input.technical,
@@ -39,7 +43,10 @@ class DecisionEngine:
             position_delta=position_delta,
             suggested_position=suggested_position,
         )
-        confidence = self._confidence(mode, risk_level)
+        confidence = self._cap_confidence_for_data_quality(
+            self._confidence(mode, risk_level),
+            decision_input.data_quality,
+        )
 
         reasons = [
             f"Market classified as {mode.value}.",
@@ -62,6 +69,53 @@ class DecisionEngine:
             suggested_position=suggested_position,
             position_delta=position_delta,
             triggered_rules=[*triggered_rules, action_rule],
+        )
+
+    def _requires_uncertain_decision(self, data_quality: DecisionDataQuality) -> bool:
+        return (
+            data_quality.required_basket_tickers_missing
+            or data_quality.data_quality_score < 50
+        )
+
+    def _uncertain_for_data_quality(
+        self,
+        decision_input: DecisionInput,
+    ) -> DecisionResult:
+        confidence = self._cap_confidence_for_data_quality(
+            self.config.confidence_by_mode.get(
+                MarketMode.MIXED.value,
+                self.config.base_confidence,
+            ),
+            decision_input.data_quality,
+        )
+        reasons = [
+            "Market classified as Mixed.",
+            "Data quality is insufficient for a reliable basket decision.",
+        ]
+        if decision_input.data_quality.missing_tickers:
+            reasons.append(
+                "Missing required market data: "
+                + ", ".join(decision_input.data_quality.missing_tickers)
+            )
+        if decision_input.data_quality.stale_tickers:
+            reasons.append(
+                "Stale market data detected: "
+                + ", ".join(decision_input.data_quality.stale_tickers)
+            )
+        return DecisionResult(
+            date=decision_input.basket.date,
+            market_mode=MarketMode.MIXED,
+            recommendation="Uncertain",
+            confidence=confidence,
+            reasons=reasons,
+            risk_level=self._risk_level(decision_input.basket),
+            current_position=decision_input.position.current_shares,
+            suggested_position=decision_input.position.current_shares,
+            position_delta=0,
+            triggered_rules=[
+                "data_quality.insufficient",
+                "position.watch_uncertain",
+            ],
         )
 
     def classify_market(
@@ -300,6 +354,22 @@ class DecisionEngine:
             MarketMode.DOWNTREND,
         }:
             confidence -= 10
+        return max(
+            self.config.min_confidence,
+            min(self.config.max_confidence, int(confidence)),
+        )
+
+    def _cap_confidence_for_data_quality(
+        self,
+        confidence: int,
+        data_quality: DecisionDataQuality,
+    ) -> int:
+        if data_quality.data_quality_score < 50:
+            confidence = min(confidence, self.config.uncertain_confidence_below - 1)
+        elif data_quality.data_quality_score < 75 or data_quality.missing_tickers:
+            confidence = min(confidence, 55)
+        elif data_quality.stale_tickers:
+            confidence = min(confidence, 65)
         return max(
             self.config.min_confidence,
             min(self.config.max_confidence, int(confidence)),
