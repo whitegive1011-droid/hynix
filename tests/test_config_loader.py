@@ -20,9 +20,11 @@ def test_load_default_config_file() -> None:
     assert config.review.forward_return_days == [1, 5, 20]
     assert config.proxy.enabled is True
     assert config.proxy.provider_priority == ["binance", "okx"]
-    assert config.proxy.symbols["NVDA"] == "NVDABUSDT"
-    assert config.proxy.symbols["MU"] == "MUBUSDT"
-    assert config.proxy.symbols["TSLA"] == "TSLABUSDT"
+    assert config.proxy.symbols["AAPL"] == "AAPLUSDT"
+    assert config.proxy.symbols["MSFT"] == "MSFTUSDT"
+    assert config.proxy.symbols["NVDA"] == "NVDAUSDT"
+    assert config.proxy.symbols["MU"] == "MUUSDT"
+    assert config.proxy.symbols["000660.KS"] == "SKHYNIXUSDT"
     assert config.proxy.allow_proxy_for_intraday_signal is True
     assert config.proxy.allow_proxy_for_core_metrics is False
     assert config.proxy.max_confidence_when_proxy_only == 65
