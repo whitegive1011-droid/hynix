@@ -246,7 +246,7 @@
               <strong>{{ signal.data_source }}</strong>
             </div>
             <div class="metric">
-              <span>Manual Mobile Input</span>
+              <span>Manual Input</span>
               <strong>{{ "Yes" if signal.manual_mobile_input_used else "No" }}</strong>
             </div>
             <div class="metric">
@@ -329,53 +329,19 @@
       </section>
       {% endif %}
 
+      {% if signal.history_depth_by_ticker %}
       <section style="margin-top: 16px;">
-        <h2>Proxy Intraday Market Signal</h2>
+        <h2>History Readiness</h2>
         <div class="indicator-list">
+          {% for ticker, rows in signal.history_depth_by_ticker.items() %}
           <div class="indicator">
-            <span class="label">Proxy Provider Used</span>
-            <span class="value">{{ signal.proxy_intraday_signal.provider_used }}</span>
+            <span class="label">{{ ticker }}</span>
+            <span class="value">{{ rows }} rows · 5D {{ "Ready" if signal.five_day_readiness.get(ticker) else "Need 6" }} · 20D {{ "Ready" if signal.twenty_day_readiness.get(ticker) else "Need 21" }}</span>
           </div>
-          <div class="indicator">
-            <span class="label">Proxy Tickers Covered</span>
-            <span class="value">{{ signal.proxy_intraday_signal.tickers_covered | join(", ") if signal.proxy_intraday_signal.tickers_covered else "None" }}</span>
-          </div>
-          <div class="indicator">
-            <span class="label">Proxy Symbols Used</span>
-            <span class="value">
-              {% if signal.proxy_intraday_signal.symbols_used %}
-              {% for ticker, symbol in signal.proxy_intraday_signal.symbols_used.items() %}{{ ticker }}: {{ symbol }}{% if not loop.last %}, {% endif %}{% endfor %}
-              {% else %}
-              None
-              {% endif %}
-            </span>
-          </div>
-          <div class="indicator">
-            <span class="label">Proxy AI Change</span>
-            <span class="value">{{ signal.proxy_intraday_signal.proxy_ai_1d_change if signal.proxy_intraday_signal.proxy_ai_1d_change is not none else "N/A" }}</span>
-          </div>
-          <div class="indicator">
-            <span class="label">Proxy HBM Change</span>
-            <span class="value">{{ signal.proxy_intraday_signal.proxy_hbm_1d_change if signal.proxy_intraday_signal.proxy_hbm_1d_change is not none else "N/A" }}</span>
-          </div>
-          <div class="indicator">
-            <span class="label">Proxy Risk Level</span>
-            <span class="value">{{ signal.proxy_intraday_signal.proxy_risk_level }}</span>
-          </div>
-          <div class="indicator">
-            <span class="label">Proxy Data Quality</span>
-            <span class="value">{{ signal.proxy_intraday_signal.proxy_data_quality }}</span>
-          </div>
-          <div class="indicator">
-            <span class="label">Decision Influenced</span>
-            <span class="value">{{ signal.proxy_intraday_signal.decision_influenced }}</span>
-          </div>
-          <div class="indicator">
-            <span class="label">Warning</span>
-            <span class="value">{{ signal.proxy_intraday_signal.warning }}</span>
-          </div>
+          {% endfor %}
         </div>
       </section>
+      {% endif %}
 
       <section style="margin-top: 16px;">
         <h2>Key Indicators</h2>

@@ -31,9 +31,6 @@ from aios.decision.models import (
 )
 from aios.market.baskets import calculate_basket_metrics
 from aios.market.indicators import add_technical_indicators
-from aios.proxy.models import PROXY_PRICE_COLUMNS, ProxyPriceRequest, ProxySignalSnapshot
-from aios.proxy.providers import create_tradable_proxy_price_provider
-from aios.proxy.signal import ProxySignalEngine
 from aios.reports.models import build_presentation_context
 from aios.reports.deployment import write_deployment_summary
 from aios.reports.presentation import generate_presentation_outputs
@@ -142,9 +139,6 @@ class AiosRunner:
         run_timestamp = current_run_timestamp(context.config.app.timezone)
         run_id = run_id_from_timestamp(run_timestamp)
         prices, metadata = self._fetch_market_data(context)
-        proxy_prices = self._fetch_proxy_prices(context)
-        official_manual_tickers = list(metadata.manual_tickers_used)
-        proxy_latest_date = _proxy_latest_date(proxy_prices)
         history = prepare_history_frame(
             prices=prices,
             run_id=run_id,
@@ -156,12 +150,11 @@ class AiosRunner:
             logging.info("Dry run enabled. Skipping history and report writes.")
         else:
             self._store_history(context, history)
-            self._store_proxy_prices(context, proxy_prices)
 
         market_state = self._build_market_state(
             context,
             prices,
-            fallback_date=proxy_latest_date or run_timestamp[:10],
+            fallback_date=run_timestamp[:10],
         )
         decision_data_quality = self._decision_data_quality(context, metadata)
         if decision_data_quality.required_basket_tickers_missing:
@@ -169,40 +162,26 @@ class AiosRunner:
                 market_state,
                 basket=self._mask_incomplete_basket_metrics(
                     market_state.basket,
-                    fallback_date=proxy_latest_date,
+                    fallback_date=run_timestamp[:10],
                 ),
             )
         portfolio_state = self._build_portfolio_state(
             context,
             market_state.technical.ticker,
         )
-        proxy_signal = self._build_proxy_signal(
-            context=context,
-            proxy_prices=proxy_prices,
-            official_basket=market_state.basket,
-            manual_tickers=official_manual_tickers,
-        )
         decision_input = DecisionInput(
             basket=market_state.basket,
             technical=market_state.technical,
             position=portfolio_state.to_position(),
             data_quality=decision_data_quality,
-            proxy_signal=proxy_signal,
         )
-        decision = DecisionEngine(
-            context.config.decision,
-            context.config.proxy,
-        ).decide(decision_input)
-        if decision.proxy_influenced:
-            proxy_signal = replace(proxy_signal, decision_influenced=True)
-        metadata = _metadata_with_manual_proxy_input(metadata, proxy_prices)
+        decision = DecisionEngine(context.config.decision).decide(decision_input)
         presentation = build_presentation_context(
             decision=decision,
             basket=market_state.basket,
             technical=market_state.technical,
             portfolio=portfolio_state.to_position(),
             metadata=metadata,
-            proxy_signal=proxy_signal,
         )
 
         if not self.dry_run:
@@ -238,281 +217,33 @@ class AiosRunner:
             lookback_days=context.config.data.lookback_days,
         )
         manual_metadata = self._manual_input_metadata(context)
-        if context.config.data.primary_provider == "multi":
-            provider = create_market_data_provider(
-                "multi",
-                csv_path=self._resolve_csv_cache_path(context),
-            )
-            logging.info(
-                "Fetching market data from multi-source provider for %s tickers.",
-                len(request.tickers),
-            )
-            if hasattr(provider, "fetch_result"):
-                result = provider.fetch_result(request)
-                prices = self._apply_manual_official_priority(
-                    context,
-                    result.prices,
-                )
-                metadata = self._build_run_metadata(
-                    prices=prices,
-                    provider_used=result.provider_mix,
-                    required_tickers=context.config.data.required_tickers,
-                    fallback_used=result.provider_mix not in {"none", "yfinance"},
-                    provider_by_ticker=result.provider_by_ticker,
-                    manual_metadata=manual_metadata,
-                )
-                logging.info("Provider used: %s", metadata.provider_used)
-                logging.info("Data quality: %s", metadata.data_quality)
-                return prices, metadata
-
-        prices = self._fetch_with_retry(
-            provider_name=context.config.data.primary_provider,
-            request=request,
-            csv_path=context.config.data.csv_path,
-            attempts=max(1, context.config.data.retry_attempts),
-            retry_delay_seconds=context.config.data.retry_delay_seconds,
+        csv_path = self._resolve_csv_cache_path(context)
+        provider = create_market_data_provider("csv", csv_path=csv_path)
+        logging.info(
+            "Manual-only mode: reading market data from CSV cache %s.",
+            csv_path,
         )
+        try:
+            prices = provider.fetch(request)
+        except FileNotFoundError:
+            logging.warning("CSV cache not found: %s", csv_path)
+            prices = pd.DataFrame(columns=PRICE_COLUMNS)
 
-        provider_used = context.config.data.primary_provider
-        fallback_used = False
-        missing_tickers = self._missing_tickers(
-            prices,
-            context.config.data.required_tickers,
-        )
-        if missing_tickers and context.config.data.primary_provider == "yfinance":
-            fallback_path = self._resolve_csv_cache_path(context)
-            logging.warning(
-                "Primary provider missing %s tickers. Falling back to CSV cache: %s",
-                len(missing_tickers),
-                fallback_path,
-            )
-            fallback_request = MarketDataRequest(
-                tickers=missing_tickers,
-                lookback_days=context.config.data.lookback_days,
-            )
-            fallback_prices = self._fetch_with_retry(
-                provider_name=context.config.data.fallback_provider,
-                request=fallback_request,
-                csv_path=fallback_path,
-                attempts=1,
-                retry_delay_seconds=0,
-            )
-            if prices.empty:
-                prices = fallback_prices
-                provider_used = context.config.data.fallback_provider
-            elif not fallback_prices.empty:
-                prices = self._merge_price_frames(prices, fallback_prices)
-                provider_used = (
-                    f"{context.config.data.primary_provider}+"
-                    f"{context.config.data.fallback_provider}"
-                )
-            fallback_used = True
-
-        prices = self._apply_manual_official_priority(context, prices)
-
+        provider_by_ticker = {
+            str(ticker): "manual_upload"
+            for ticker in prices["ticker"].astype(str).unique()
+        } if not prices.empty else {}
         metadata = self._build_run_metadata(
             prices=prices,
-            provider_used=provider_used,
+            provider_used="csv",
             required_tickers=context.config.data.required_tickers,
-            fallback_used=fallback_used,
+            fallback_used=False,
+            provider_by_ticker=provider_by_ticker,
             manual_metadata=manual_metadata,
         )
         logging.info("Provider used: %s", metadata.provider_used)
         logging.info("Data quality: %s", metadata.data_quality)
         return prices, metadata
-
-    def _fetch_proxy_prices(self, context: RunContext) -> pd.DataFrame:
-        stored_prices = self._stored_proxy_prices(context)
-        if not context.config.proxy.enabled:
-            return stored_prices
-        symbols = {
-            ticker: symbol
-            for ticker, symbol in context.config.proxy.symbols.items()
-            if str(symbol).strip()
-        }
-        if not symbols:
-            return stored_prices
-        provider = create_tradable_proxy_price_provider(context.config.proxy)
-        request = ProxyPriceRequest(
-            symbols=symbols,
-            provider_priority=context.config.proxy.provider_priority,
-        )
-        fetched_prices = provider.fetch(request)
-        return self._merge_proxy_frames(stored_prices, fetched_prices)
-
-    @staticmethod
-    def _stored_proxy_prices(context: RunContext) -> pd.DataFrame:
-        proxy_path = context.config.proxy.output_path
-        if not proxy_path.exists():
-            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
-        try:
-            frame = pd.read_csv(proxy_path)
-        except Exception as exc:  # pragma: no cover - defensive logging
-            logging.warning("Could not read proxy cache %s: %s", proxy_path, exc)
-            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
-        if frame.empty:
-            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
-        for column in PROXY_PRICE_COLUMNS:
-            if column not in frame.columns:
-                logging.warning(
-                    "Proxy cache %s is missing column %s.",
-                    proxy_path,
-                    column,
-                )
-                return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
-        return frame[PROXY_PRICE_COLUMNS]
-
-    @staticmethod
-    def _merge_proxy_frames(
-        stored_prices: pd.DataFrame,
-        fetched_prices: pd.DataFrame,
-    ) -> pd.DataFrame:
-        frames = [
-            frame
-            for frame in [stored_prices, fetched_prices]
-            if frame is not None and not frame.empty
-        ]
-        if not frames:
-            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
-        combined = pd.concat(frames, ignore_index=True)
-        combined["timestamp_sort"] = pd.to_datetime(
-            combined["timestamp"],
-            errors="coerce",
-        )
-        combined = combined.sort_values(
-            ["ticker", "timestamp_sort"],
-            na_position="first",
-        )
-        return (
-            combined[PROXY_PRICE_COLUMNS]
-            .drop_duplicates(subset=["date", "ticker", "provider"], keep="last")
-            .reset_index(drop=True)
-        )
-
-    @staticmethod
-    def _build_proxy_signal(
-        context: RunContext,
-        proxy_prices: pd.DataFrame,
-        official_basket: BasketSnapshot,
-        manual_tickers: list[str],
-    ) -> ProxySignalSnapshot:
-        return ProxySignalEngine(
-            ai_tickers=list(context.config.baskets.ai),
-            hbm_weights=context.config.baskets.hbm,
-            manual_official_tickers=manual_tickers,
-        ).build(proxy_prices, official_basket=official_basket)
-
-    def _apply_manual_official_priority(
-        self,
-        context: RunContext,
-        prices: pd.DataFrame,
-    ) -> pd.DataFrame:
-        manual_prices = self._manual_official_prices(context)
-        if manual_prices.empty:
-            return prices
-        return self._merge_price_frames(manual_prices, prices)
-
-    def _manual_official_prices(self, context: RunContext) -> pd.DataFrame:
-        manual_path = self._manual_input_path(context)
-        if not manual_path.exists():
-            return pd.DataFrame(columns=PRICE_COLUMNS)
-        try:
-            frame = pd.read_csv(manual_path)
-        except Exception:
-            return pd.DataFrame(columns=PRICE_COLUMNS)
-        required_columns = {"date", "ticker", "close"}
-        if frame.empty or not required_columns.issubset(frame.columns):
-            return pd.DataFrame(columns=PRICE_COLUMNS)
-
-        manual = _manual_official_rows(frame)
-        if manual.empty:
-            return pd.DataFrame(columns=PRICE_COLUMNS)
-        manual["date"] = pd.to_datetime(
-            manual["date"],
-            errors="coerce",
-        ).dt.date.astype(str)
-        manual["ticker"] = manual["ticker"].astype(str)
-        manual["close"] = pd.to_numeric(manual["close"], errors="coerce")
-        manual = manual.dropna(subset=["date", "ticker", "close"])
-        manual = manual[manual["date"] != "NaT"]
-        if manual.empty:
-            return pd.DataFrame(columns=PRICE_COLUMNS)
-        return pd.DataFrame(
-            {
-                "date": manual["date"],
-                "ticker": manual["ticker"],
-                "open": manual["close"],
-                "high": manual["close"],
-                "low": manual["close"],
-                "close": manual["close"],
-                "adj_close": manual["close"],
-                "volume": 0,
-            }
-        )[PRICE_COLUMNS]
-
-    @staticmethod
-    def _missing_tickers(prices, required_tickers: list[str]) -> list[str]:
-        if prices.empty:
-            return list(required_tickers)
-        available_tickers = set(prices["ticker"].astype(str).unique())
-        return [ticker for ticker in required_tickers if ticker not in available_tickers]
-
-    @staticmethod
-    def _merge_price_frames(primary_prices, fallback_prices):
-        if primary_prices.empty:
-            return fallback_prices
-        if fallback_prices.empty:
-            return primary_prices
-
-        combined = pd.concat(
-            [primary_prices[PRICE_COLUMNS], fallback_prices[PRICE_COLUMNS]],
-            ignore_index=True,
-        )
-        combined["date"] = pd.to_datetime(combined["date"]).dt.date.astype(str)
-        combined["ticker"] = combined["ticker"].astype(str)
-        return (
-            combined.sort_values(["ticker", "date"])
-            .drop_duplicates(subset=["date", "ticker"], keep="first")
-            .reset_index(drop=True)
-        )
-
-    def _fetch_with_retry(
-        self,
-        provider_name: str,
-        request: MarketDataRequest,
-        csv_path: Path | None,
-        attempts: int,
-        retry_delay_seconds: float,
-    ):
-        provider = create_market_data_provider(provider_name, csv_path=csv_path)
-        last_error: Exception | None = None
-        for attempt in range(1, attempts + 1):
-            try:
-                logging.info(
-                    "Fetching market data from %s for %s tickers. Attempt %s/%s.",
-                    provider.source_name,
-                    len(request.tickers),
-                    attempt,
-                    attempts,
-                )
-                prices = provider.fetch(request)
-                if not prices.empty:
-                    return prices
-            except Exception as exc:  # pragma: no cover - defensive logging
-                last_error = exc
-                logging.warning(
-                    "Market data fetch failed from %s on attempt %s/%s: %s",
-                    provider.source_name,
-                    attempt,
-                    attempts,
-                    exc,
-                )
-            if attempt < attempts and retry_delay_seconds > 0:
-                time.sleep(retry_delay_seconds)
-
-        if last_error is not None:
-            logging.warning("All fetch attempts failed: %s", last_error)
-        return provider.fetch(MarketDataRequest(tickers=[], lookback_days=0))
 
     @staticmethod
     def _resolve_csv_cache_path(context: RunContext) -> Path:
@@ -535,7 +266,7 @@ class AiosRunner:
         if frame.empty or "date" not in frame.columns or "ticker" not in frame.columns:
             return _default_manual_metadata()
 
-        normalized = _manual_official_rows(frame)
+        normalized = _manual_upload_rows(frame)
         if normalized.empty:
             return _default_manual_metadata()
         normalized["date"] = pd.to_datetime(
@@ -592,17 +323,26 @@ class AiosRunner:
             required_tickers=required_tickers,
             provider_by_ticker=provider_by_ticker,
         )
-        provider_map = dict(coverage.provider_by_ticker)
+        provider_map = {
+            ticker: "manual_upload"
+            for ticker in coverage.available_tickers
+        }
         manual_tickers = [
             str(ticker) for ticker in manual_metadata.get("tickers", [])
         ]
-        if manual_metadata.get("used"):
-            for ticker in manual_tickers:
-                if ticker in provider_map:
-                    provider_map[ticker] = "GitHub Issue"
+        history_depth = {
+            ticker: int(coverage.row_counts.get(ticker, 0))
+            for ticker in required_tickers
+        }
+        five_day_readiness = {
+            ticker: depth >= 6 for ticker, depth in history_depth.items()
+        }
+        twenty_day_readiness = {
+            ticker: depth >= 21 for ticker, depth in history_depth.items()
+        }
         if prices.empty:
             return RunMetadata(
-                data_source=provider_used,
+                data_source="Manual Upload Only",
                 provider_used=provider_used,
                 last_update="N/A",
                 data_quality="Failed",
@@ -618,7 +358,12 @@ class AiosRunner:
                     manual_metadata.get("latest_date", "N/A")
                 ),
                 manual_tickers_used=manual_tickers,
-                manual_source=str(manual_metadata.get("source", "None")),
+                manual_source="manual_upload"
+                if manual_metadata.get("used")
+                else "None",
+                history_depth_by_ticker=history_depth,
+                five_day_readiness=five_day_readiness,
+                twenty_day_readiness=twenty_day_readiness,
             )
 
         last_update = (
@@ -630,11 +375,18 @@ class AiosRunner:
             coverage.data_quality_score,
             coverage.missing_tickers,
         )
-        if fallback_used and quality == "OK":
-            quality = "Fallback"
+        incomplete_five_day_history = not all(five_day_readiness.values())
+        if incomplete_five_day_history and quality == "OK":
+            quality = "Degraded"
+        available_tickers = sorted(prices["ticker"].astype(str).unique())
+        if not manual_tickers:
+            manual_tickers = available_tickers
+        latest_manual_date = str(manual_metadata.get("latest_date", "N/A"))
+        if latest_manual_date == "N/A":
+            latest_manual_date = last_update
 
         return RunMetadata(
-            data_source=provider_used,
+            data_source="Manual Upload Only",
             provider_used=provider_used,
             last_update=last_update,
             data_quality=quality,
@@ -647,14 +399,16 @@ class AiosRunner:
             recommendation_degraded=(
                 bool(coverage.missing_tickers)
                 or bool(coverage.stale_tickers)
+                or incomplete_five_day_history
                 or coverage.data_quality_score < 90
             ),
-            manual_mobile_input_used=bool(manual_metadata.get("used")),
-            latest_manual_input_date=str(
-                manual_metadata.get("latest_date", "N/A")
-            ),
+            manual_mobile_input_used=True,
+            latest_manual_input_date=latest_manual_date,
             manual_tickers_used=manual_tickers,
-            manual_source=str(manual_metadata.get("source", "None")),
+            manual_source="manual_upload",
+            history_depth_by_ticker=history_depth,
+            five_day_readiness=five_day_readiness,
+            twenty_day_readiness=twenty_day_readiness,
         )
 
     @staticmethod
@@ -664,9 +418,15 @@ class AiosRunner:
     ) -> DecisionDataQuality:
         basket_tickers = set(context.config.baskets.ai) | set(context.config.baskets.hbm)
         missing = set(metadata.missing_tickers)
+        insufficient_history = sorted(
+            ticker
+            for ticker in basket_tickers
+            if metadata.history_depth_by_ticker.get(ticker, 0) < 6
+        )
         return DecisionDataQuality(
             missing_tickers=metadata.missing_tickers,
             stale_tickers=metadata.stale_tickers or [],
+            insufficient_history_tickers=insufficient_history,
             data_quality_score=metadata.data_quality_score,
             required_basket_tickers_missing=bool(basket_tickers & missing),
         )
@@ -682,21 +442,6 @@ class AiosRunner:
         logging.info(
             "Market history written to %s with %s rows.",
             history_path,
-            len(stored),
-        )
-
-    @staticmethod
-    def _store_proxy_prices(context: RunContext, proxy_prices: pd.DataFrame) -> None:
-        if proxy_prices.empty:
-            return
-        stored = upsert_csv(
-            path=context.config.proxy.output_path,
-            frame=proxy_prices[PROXY_PRICE_COLUMNS],
-            key_columns=["date", "ticker", "provider"],
-        )
-        logging.info(
-            "Tradable proxy prices written to %s with %s rows.",
-            context.config.proxy.output_path,
             len(stored),
         )
 
@@ -792,128 +537,9 @@ def _default_manual_metadata() -> dict[str, object]:
     }
 
 
-def _manual_official_rows(frame: pd.DataFrame) -> pd.DataFrame:
-    """Return only rows that are manual official prices, not proxy inputs."""
+def _manual_upload_rows(frame: pd.DataFrame) -> pd.DataFrame:
+    """Return manual upload rows. All sources are official in manual-only mode."""
 
     if frame.empty:
         return frame.copy()
-    source = (
-        frame["source"].astype(str)
-        if "source" in frame.columns
-        else pd.Series("", index=frame.index)
-    )
-    note = (
-        frame["note"].astype(str)
-        if "note" in frame.columns
-        else pd.Series("", index=frame.index)
-    )
-    proxy_mask = (
-        source.str.contains("proxy", case=False, na=False)
-        | note.str.contains("proxy", case=False, na=False)
-    )
-    return frame.loc[~proxy_mask].copy()
-
-
-def _metadata_with_manual_proxy_input(
-    metadata: RunMetadata,
-    proxy_prices: pd.DataFrame,
-) -> RunMetadata:
-    proxy_metadata = _manual_proxy_metadata(
-        proxy_prices,
-        overridden_tickers=metadata.manual_tickers_used,
-    )
-    if not proxy_metadata.get("used"):
-        return metadata
-
-    manual_tickers = sorted(
-        {
-            *metadata.manual_tickers_used,
-            *[str(ticker) for ticker in proxy_metadata.get("tickers", [])],
-        }
-    )
-    latest_date = _latest_non_na_date(
-        [
-            metadata.latest_manual_input_date,
-            str(proxy_metadata.get("latest_date", "N/A")),
-        ]
-    )
-    source = _combined_source(
-        metadata.manual_source,
-        str(proxy_metadata.get("source", "GitHub Issue Proxy")),
-    )
-    return replace(
-        metadata,
-        manual_mobile_input_used=True,
-        latest_manual_input_date=latest_date,
-        manual_tickers_used=manual_tickers,
-        manual_source=source,
-    )
-
-
-def _manual_proxy_metadata(
-    proxy_prices: pd.DataFrame,
-    overridden_tickers: list[str] | None = None,
-) -> dict[str, object]:
-    if proxy_prices.empty:
-        return _default_manual_metadata()
-
-    frame = proxy_prices.copy()
-    required = {"date", "ticker", "source", "provider", "session"}
-    if not required.issubset(frame.columns):
-        return _default_manual_metadata()
-
-    source = frame["source"].astype(str)
-    provider = frame["provider"].astype(str)
-    session = frame["session"].astype(str)
-    manual_proxy = frame[
-        source.str.contains("GitHub Issue", case=False, na=False)
-        | provider.str.contains("proxy", case=False, na=False)
-        | session.str.contains("manual", case=False, na=False)
-    ].copy()
-    overridden = set(overridden_tickers or [])
-    if overridden:
-        manual_proxy = manual_proxy[
-            ~manual_proxy["ticker"].astype(str).isin(overridden)
-        ]
-    if manual_proxy.empty:
-        return _default_manual_metadata()
-
-    manual_proxy["date"] = pd.to_datetime(
-        manual_proxy["date"],
-        errors="coerce",
-    ).dt.date.astype(str)
-    manual_proxy = manual_proxy[manual_proxy["date"] != "NaT"]
-    if manual_proxy.empty:
-        return _default_manual_metadata()
-
-    latest_date = max(manual_proxy["date"].astype(str))
-    latest_rows = manual_proxy[manual_proxy["date"].astype(str) == latest_date]
-    return {
-        "used": True,
-        "latest_date": latest_date,
-        "tickers": sorted(latest_rows["ticker"].astype(str).unique()),
-        "source": "GitHub Issue Proxy",
-    }
-
-
-def _latest_non_na_date(values: list[str]) -> str:
-    dates = [value for value in values if value and value != "N/A"]
-    return max(dates) if dates else "N/A"
-
-
-def _combined_source(*values: str) -> str:
-    sources = [
-        value
-        for value in values
-        if value and value != "None" and value != "N/A"
-    ]
-    return "+".join(sorted(set(sources))) if sources else "None"
-
-
-def _proxy_latest_date(proxy_prices: pd.DataFrame) -> str | None:
-    if proxy_prices.empty or "date" not in proxy_prices.columns:
-        return None
-    dates = pd.to_datetime(proxy_prices["date"], errors="coerce").dropna()
-    if dates.empty:
-        return None
-    return dates.max().date().isoformat()
+    return frame.copy()

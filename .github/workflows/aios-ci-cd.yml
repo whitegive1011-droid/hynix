@@ -53,7 +53,7 @@ jobs:
           AIOS_TEST_RESULT: passed
           AIOS_DEPLOYMENT_STATUS: generated
         run: |
-          python main.py --no-input --output-dir reports
+          python main.py --provider csv --output-dir reports --no-input
 
       - name: Validate generated reports
         run: |

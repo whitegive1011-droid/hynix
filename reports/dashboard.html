@@ -243,15 +243,15 @@
             </div>
             <div class="metric">
               <span>Data Source</span>
-              <strong>csv</strong>
+              <strong>Manual Upload Only</strong>
             </div>
             <div class="metric">
-              <span>Manual Mobile Input</span>
+              <span>Manual Input</span>
               <strong>Yes</strong>
             </div>
             <div class="metric">
               <span>Manual Source</span>
-              <strong>GitHub Issue</strong>
+              <strong>manual_upload</strong>
             </div>
             <div class="metric">
               <span>Last Update</span>
@@ -263,7 +263,7 @@
             </div>
             <div class="metric">
               <span>Data Quality</span>
-              <strong class="quality">Fallback</strong>
+              <strong class="quality">Degraded</strong>
             </div>
             <div class="metric">
               <span>Data Quality Score</span>
@@ -275,7 +275,7 @@
             </div>
             <div class="metric">
               <span>Degraded</span>
-              <strong>False</strong>
+              <strong>True</strong>
             </div>
           </div>
         </section>
@@ -283,224 +283,198 @@
         <section>
           <h2>Top Reasons</h2>
           <ul>
-            
             <li>Market classified as Mixed.</li>
-            
-            <li>Indicators do not align strongly enough for a directional mode.</li>
-            
-            <li>Conflicting signals favor watching instead of adjusting.</li>
-            
-            <li>Confidence is below the configured uncertainty threshold.</li>
-            
+            <li>Data quality is insufficient for a reliable basket decision.</li>
+            <li>Insufficient manual history for 5D/Risk Score: 000660.KS, 005930.KS, AAPL, AMZN, GOOGL, META, MSFT, MU, TSLA. 5D requires at least 6 trading days.</li>
           </ul>
         </section>
       </div>
 
-      
       <section class="warnings">
         <h2>Data Quality Warnings</h2>
         <ul>
-          
-          <li>Fallback market data provider was used; review recommendation confidence.</li>
-          
-          <li>Manual mobile input was used from GitHub Issue on 2026-06-28.</li>
-          
+          <li>Recommendation is degraded because data quality is below the target.</li>
+          <li>Manual upload data was used from manual_upload on 2026-06-28.</li>
+          <li>5D readiness is incomplete for 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX; at least 6 trading days are required.</li>
+          <li>20D readiness is incomplete for 7709.HK, 7747.HK, 000660.KS, 005930.KS, MU, NVDA, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX; at least 21 trading days are required.</li>
           <li>Unavailable indicators due to insufficient source data: Risk Score, AI 5D Return, HBM 5D Return, D5, D20</li>
-          
         </ul>
       </section>
-      
 
-      
       <section style="margin-top: 16px;">
         <h2>Manual Tickers Used</h2>
         <div class="indicator-list">
-          
           <div class="indicator">
             <span class="label">000660.KS</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">005930.KS</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">AAPL</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">AMZN</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">GOOGL</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">META</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">MSFT</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">MU</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">NVDA</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">QQQ</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">SOXX</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
           <div class="indicator">
             <span class="label">TSLA</span>
             <span class="value">GitHub Issue</span>
           </div>
-          
         </div>
       </section>
-      
 
-      
       <section style="margin-top: 16px;">
         <h2>Provider Attribution</h2>
         <div class="indicator-list">
-          
           <div class="indicator">
             <span class="label">000660.KS</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">005930.KS</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">7709.HK</span>
-            <span class="value">csv</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">7747.HK</span>
-            <span class="value">csv</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">AAPL</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">AMZN</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">GOOGL</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">META</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">MSFT</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">MU</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">NVDA</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">QQQ</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">SOXX</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
           <div class="indicator">
             <span class="label">TSLA</span>
-            <span class="value">GitHub Issue</span>
+            <span class="value">manual_upload</span>
           </div>
-          
         </div>
       </section>
-      
 
       <section style="margin-top: 16px;">
-        <h2>Proxy Intraday Market Signal</h2>
+        <h2>History Readiness</h2>
         <div class="indicator-list">
           <div class="indicator">
-            <span class="label">Proxy Provider Used</span>
-            <span class="value">none</span>
+            <span class="label">7709.HK</span>
+            <span class="value">6 rows · 5D Ready · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Proxy Tickers Covered</span>
-            <span class="value">None</span>
+            <span class="label">7747.HK</span>
+            <span class="value">1 rows · 5D Need 6 · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Proxy Symbols Used</span>
-            <span class="value">
-              
-              None
-              
-            </span>
+            <span class="label">000660.KS</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Proxy AI Change</span>
-            <span class="value">N/A</span>
+            <span class="label">005930.KS</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Proxy HBM Change</span>
-            <span class="value">N/A</span>
+            <span class="label">MU</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Proxy Risk Level</span>
-            <span class="value">N/A</span>
+            <span class="label">NVDA</span>
+            <span class="value">7 rows · 5D Ready · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Proxy Data Quality</span>
-            <span class="value">Missing</span>
+            <span class="label">MSFT</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Decision Influenced</span>
-            <span class="value">False</span>
+            <span class="label">GOOGL</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
           </div>
           <div class="indicator">
-            <span class="label">Warning</span>
-            <span class="value">Tradable proxy price is not official equity market data.</span>
+            <span class="label">AMZN</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
+          </div>
+          <div class="indicator">
+            <span class="label">META</span>
+            <span class="value">1 rows · 5D Need 6 · 20D Need 21</span>
+          </div>
+          <div class="indicator">
+            <span class="label">AAPL</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
+          </div>
+          <div class="indicator">
+            <span class="label">TSLA</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
+          </div>
+          <div class="indicator">
+            <span class="label">QQQ</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
+          </div>
+          <div class="indicator">
+            <span class="label">SOXX</span>
+            <span class="value">2 rows · 5D Need 6 · 20D Need 21</span>
           </div>
         </div>
       </section>
@@ -508,52 +482,42 @@
       <section style="margin-top: 16px;">
         <h2>Key Indicators</h2>
         <div class="indicator-list">
-          
           <div class="indicator">
             <span class="label">Relative Ratio</span>
             <span class="value">0.500</span>
           </div>
-          
           <div class="indicator">
             <span class="label">Risk Score</span>
             <span class="value">N/A</span>
           </div>
-          
           <div class="indicator">
             <span class="label">AI 5D Return</span>
             <span class="value">N/A</span>
           </div>
-          
           <div class="indicator">
             <span class="label">HBM 5D Return</span>
             <span class="value">N/A</span>
           </div>
-          
           <div class="indicator">
             <span class="label">D5</span>
             <span class="value">N/A</span>
           </div>
-          
           <div class="indicator">
             <span class="label">D20</span>
             <span class="value">N/A</span>
           </div>
-          
           <div class="indicator">
             <span class="label">RSI14</span>
             <span class="value">100.0</span>
           </div>
-          
           <div class="indicator">
             <span class="label">ADX14</span>
             <span class="value">100.0</span>
           </div>
-          
           <div class="indicator">
             <span class="label">MACD</span>
             <span class="value">12.10</span>
           </div>
-          
         </div>
       </section>
     </main>

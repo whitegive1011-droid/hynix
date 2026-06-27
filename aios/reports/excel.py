@@ -34,12 +34,12 @@ def write_investment_dashboard(
     dashboard.title = "Dashboard"
     indicators = workbook.create_sheet("Key Indicators")
     reasons = workbook.create_sheet("Reasons")
-    proxy = workbook.create_sheet("Proxy Signal")
+    history = workbook.create_sheet("History Readiness")
 
     _render_dashboard_sheet(dashboard, context)
     _render_indicators_sheet(indicators, context)
     _render_reasons_sheet(reasons, context)
-    _render_proxy_sheet(proxy, context)
+    _render_history_readiness_sheet(history, context)
 
     workbook.save(path)
     return path
@@ -56,7 +56,7 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
         ("Date", context.date),
         ("Data Source", context.metadata.data_source),
         (
-            "Manual Mobile Input Used",
+            "Manual Input Used",
             "Yes" if context.metadata.manual_mobile_input_used else "No",
         ),
         ("Manual Source", context.metadata.manual_source),
@@ -70,13 +70,6 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
         ("Data Quality Score", context.metadata.data_quality_score),
         ("Cache Coverage %", context.metadata.cache_coverage_percentage),
         ("Recommendation Degraded", context.metadata.recommendation_degraded),
-        (
-            "Decision Influenced By Proxy",
-            "Yes" if context.decision.proxy_influenced else "No",
-        ),
-        ("Proxy Provider Used", context.proxy_signal.provider_used),
-        ("Proxy Risk Level", context.proxy_signal.proxy_risk_level),
-        ("Proxy Data Quality", context.proxy_signal.proxy_data_quality),
         ("Today's Recommendation", decision.recommendation),
         ("Confidence", decision.confidence),
         ("Risk Level", decision.risk_level.value),
@@ -140,39 +133,21 @@ def _render_reasons_sheet(sheet, context: PresentationContext) -> None:
         sheet.cell(row=row, column=2).alignment = Alignment(wrap_text=True)
 
 
-def _render_proxy_sheet(sheet, context: PresentationContext) -> None:
-    proxy = context.proxy_signal
-    rows = [
-        ("Available", "Yes" if proxy.available else "No"),
-        ("Provider Used", proxy.provider_used),
-        ("Tickers Covered", ", ".join(proxy.tickers_covered) or "None"),
-        (
-            "Symbols Used",
-            ", ".join(
-                f"{ticker}: {symbol}"
-                for ticker, symbol in proxy.symbols_used.items()
-            )
-            or "None",
-        ),
-        ("Proxy AI Change", proxy.proxy_ai_1d_change),
-        ("Proxy HBM Change", proxy.proxy_hbm_1d_change),
-        ("Proxy Risk Level", proxy.proxy_risk_level),
-        ("Proxy Data Quality", proxy.proxy_data_quality),
-        ("Official Conflict", "Yes" if proxy.proxy_official_conflict_flag else "No"),
-        (
-            "Decision Influenced",
-            "Yes" if proxy.decision_influenced else "No",
-        ),
-        ("Warning", proxy.warning),
-    ]
-    sheet.append(["Field", "Value"])
-    for row in rows:
-        sheet.append(list(row))
+def _render_history_readiness_sheet(sheet, context: PresentationContext) -> None:
+    sheet.append(["Ticker", "History Rows", "5D Ready", "20D Ready"])
+    tickers = sorted(context.metadata.history_depth_by_ticker)
+    for ticker in tickers:
+        sheet.append(
+            [
+                ticker,
+                context.metadata.history_depth_by_ticker.get(ticker, 0),
+                "Yes" if context.metadata.five_day_readiness.get(ticker) else "No",
+                "Yes" if context.metadata.twenty_day_readiness.get(ticker) else "No",
+            ]
+        )
     sheet.freeze_panes = "A2"
-    sheet.auto_filter.ref = f"A1:B{sheet.max_row}"
+    sheet.auto_filter.ref = f"A1:D{sheet.max_row}"
     _style_table_sheet(sheet)
-    for row in range(2, sheet.max_row + 1):
-        sheet.cell(row=row, column=2).alignment = Alignment(wrap_text=True)
 
 
 def _write_key_value_rows(sheet, rows: list[tuple[str, object]], start_row: int) -> None:
@@ -214,7 +189,7 @@ def _style_table_sheet(sheet) -> None:
 
 def _apply_dashboard_conditional_formatting(sheet) -> None:
     sheet.conditional_formatting.add(
-        "B5",
+        "B15",
         CellIsRule(
             operator="greaterThanOrEqual",
             formula=["70"],
@@ -222,7 +197,7 @@ def _apply_dashboard_conditional_formatting(sheet) -> None:
         ),
     )
     sheet.conditional_formatting.add(
-        "B5",
+        "B15",
         CellIsRule(
             operator="lessThan",
             formula=["45"],

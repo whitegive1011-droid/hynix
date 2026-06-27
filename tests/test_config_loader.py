@@ -10,7 +10,7 @@ def test_load_default_config_file() -> None:
 
     assert config.app.timezone == "Asia/Shanghai"
     assert config.app.output_dir == Path("outputs")
-    assert config.data.primary_provider == "multi"
+    assert config.data.primary_provider == "csv"
     assert config.data.fallback_provider == "csv"
     assert config.data.csv_path == Path("data/cache/market_cache.csv")
     assert config.data.retry_attempts == 2
@@ -18,18 +18,7 @@ def test_load_default_config_file() -> None:
     assert config.data_quality.confidence_penalty["failed"] == 50
     assert config.baskets.hbm["000660.KS"] == 0.5
     assert config.review.forward_return_days == [1, 5, 20]
-    assert config.proxy.enabled is True
-    assert config.proxy.provider_priority == ["binance", "okx"]
-    assert config.proxy.symbols["AAPL"] == "AAPLUSDT"
-    assert config.proxy.symbols["MSFT"] == "MSFTUSDT"
-    assert config.proxy.symbols["NVDA"] == "NVDAUSDT"
-    assert config.proxy.symbols["MU"] == "MUUSDT"
-    assert config.proxy.symbols["000660.KS"] == "SKHYNIXUSDT"
-    assert config.proxy.allow_proxy_for_intraday_signal is True
-    assert config.proxy.allow_proxy_for_core_metrics is False
-    assert config.proxy.max_confidence_when_proxy_only == 65
-    assert config.proxy.max_confidence_when_proxy_conflict == 55
-    assert config.proxy.write_proxy_to_official_cache is False
+    assert config.proxy.enabled is False
 
 
 def test_load_default_portfolio_file() -> None:

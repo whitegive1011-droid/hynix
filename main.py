@@ -32,9 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     seed_parser.add_argument(
         "--provider",
-        choices=["yfinance", "stooq", "alphavantage", "finnhub", "csv", "multi"],
-        default="yfinance",
-        help="Market data provider used for cache seeding.",
+        choices=["csv"],
+        default="csv",
+        help="Manual-only mode supports CSV cache seeding only.",
     )
     seed_parser.add_argument(
         "--output",
@@ -129,9 +129,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--provider",
-        choices=["multi", "yfinance", "stooq", "alphavantage", "finnhub", "csv"],
+        choices=["csv"],
         default=None,
-        help="Market data provider override.",
+        help="Market data provider override. Manual-only mode supports csv.",
+    )
+    parser.add_argument(
+        "--manual-only",
+        action="store_true",
+        help="Run in manual-only mode. This is the default runtime behavior.",
     )
     parser.add_argument(
         "--output-dir",

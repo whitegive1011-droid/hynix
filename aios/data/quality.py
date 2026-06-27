@@ -73,6 +73,7 @@ def build_cache_coverage_report(
         data_quality_score=data_quality_score,
         date_ranges=date_ranges,
         last_available_dates=last_dates,
+        row_counts=row_counts,
         provider_by_ticker={
             ticker: provider_by_ticker.get(ticker, "unknown")
             for ticker in available

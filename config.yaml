@@ -5,7 +5,7 @@ app:
   run_mode: daily
 
 data:
-  primary_provider: multi
+  primary_provider: csv
   fallback_provider: csv
   csv_path: data/cache/market_cache.csv
   retry_attempts: 2
@@ -36,29 +36,6 @@ data_quality:
     warning: 10
     degraded: 25
     failed: 50
-
-proxy:
-  enabled: true
-  provider_priority:
-    - binance
-    - okx
-  symbols:
-    MSFT: "MSFTUSDT"
-    GOOGL: "GOOGLUSDT"
-    AMZN: "AMZNUSDT"
-    META: "METAUSDT"
-    AAPL: "AAPLUSDT"
-    TSLA: "TSLAUSDT"
-    NVDA: "NVDAUSDT"
-    MU: "MUUSDT"
-    000660.KS: "SKHYNIXUSDT"
-    005930.KS: "SAMSUNGUSDT"
-  allow_proxy_for_intraday_signal: true
-  allow_proxy_for_core_metrics: false
-  max_confidence_when_proxy_only: 65
-  max_confidence_when_proxy_conflict: 55
-  write_proxy_to_official_cache: false
-  output_path: data/proxy/tradable_proxy_prices.csv
 
 baskets:
   ai:

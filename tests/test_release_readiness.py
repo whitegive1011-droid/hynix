@@ -21,7 +21,9 @@ def test_readme_contains_release_setup_and_usage_instructions() -> None:
     required_phrases = [
         "Local Setup",
         ".venv/bin/python -m pytest",
-        ".venv/bin/python main.py --no-input",
+        ".venv/bin/python main.py --provider csv --output-dir reports --no-input",
+        "manual-only",
+        "Manual Upload Only",
         "GitHub Actions Deployment",
         "Settings -> Pages",
         "GitHub Actions",

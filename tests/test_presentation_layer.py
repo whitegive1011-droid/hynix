@@ -14,7 +14,6 @@ from aios.decision.models import (
     RiskLevel,
     TechnicalSnapshot,
 )
-from aios.proxy.models import PROXY_WARNING, ProxySignalSnapshot
 from aios.reports.models import build_presentation_context, context_to_dict
 from aios.reports.presentation import generate_presentation_outputs
 
@@ -32,14 +31,17 @@ def test_context_to_dict_renders_decision_without_recalculating() -> None:
     assert payload["suggested_position"] == 300
     assert payload["relative_ratio"] == 1.08
     assert payload["risk_score"] == 12.5
-    assert payload["data_source"] == "csv"
+    assert payload["data_source"] == "Manual Upload Only"
     assert payload["last_update"] == "2026-06-26"
     assert payload["data_quality"] == "OK"
     assert payload["manual_mobile_input_used"] is False
     assert payload["latest_manual_input_date"] == "N/A"
     assert payload["manual_tickers_used"] == []
     assert payload["manual_source"] == "None"
-    assert payload["proxy_intraday_signal"]["available"] is False
+    assert "proxy_intraday_signal" not in payload
+    assert payload["history_depth_by_ticker"] == {}
+    assert payload["five_day_readiness"] == {}
+    assert payload["twenty_day_readiness"] == {}
     assert payload["data_warnings"] == []
     assert payload["top_reasons"] == [
         "Market classified as Uptrend.",
@@ -49,7 +51,20 @@ def test_context_to_dict_renders_decision_without_recalculating() -> None:
 
 def test_generate_presentation_outputs(tmp_path: Path) -> None:
     paths = generate_presentation_outputs(
-        _presentation_context(),
+        _presentation_context(
+            metadata=RunMetadata(
+                data_source="Manual Upload Only",
+                provider_used="csv",
+                last_update="2026-06-26",
+                data_quality="OK",
+                missing_tickers=[],
+                data_quality_score=100,
+                cache_coverage_percentage=100.0,
+                history_depth_by_ticker={"AI1": 21, "HBM1": 6},
+                five_day_readiness={"AI1": True, "HBM1": True},
+                twenty_day_readiness={"AI1": True, "HBM1": False},
+            )
+        ),
         tmp_path,
     )
 
@@ -59,9 +74,10 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
 
     signal = json.loads(paths.latest_signal.read_text(encoding="utf-8"))
     assert signal["recommendation"] == "Hold"
-    assert signal["data_source"] == "csv"
+    assert signal["data_source"] == "Manual Upload Only"
     assert signal["data_quality"] == "OK"
     assert signal["key_indicators"][0]["label"] == "Relative Ratio"
+    assert "proxy_intraday_signal" not in signal
 
     html = paths.html_dashboard.read_text(encoding="utf-8")
     assert "AIOS Daily Dashboard" in html
@@ -70,9 +86,9 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert "Risk Score" in html
     assert "Data Source" in html
     assert "Data Quality" in html
-    assert "Manual Mobile Input" in html
-    assert "Proxy Intraday Market Signal" in html
-    assert "Proxy Symbols Used" in html
+    assert "Manual Input" in html
+    assert "History Readiness" in html
+    assert "Proxy Intraday Market Signal" not in html
     assert "@media (max-width: 760px)" in html
     assert "<script" not in html.lower()
 
@@ -81,11 +97,11 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
         "Dashboard",
         "Key Indicators",
         "Reasons",
-        "Proxy Signal",
+        "History Readiness",
     ]
 
     dashboard = workbook["Dashboard"]
-    assert dashboard["B4"].value == "csv"
+    assert dashboard["B4"].value == "Manual Upload Only"
     assert dashboard["B5"].value == "No"
     assert dashboard["B6"].value == "None"
     assert dashboard["B7"].value == "N/A"
@@ -95,16 +111,12 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert dashboard["B11"].value == 100
     assert dashboard["B12"].value == 100.0
     assert dashboard["B13"].value is False
-    assert dashboard["B14"].value == "No"
-    assert dashboard["B15"].value == "none"
-    assert dashboard["B16"].value == "N/A"
-    assert dashboard["B17"].value == "Missing"
-    assert dashboard["B18"].value == "Hold"
-    assert dashboard["B19"].value == 72
-    assert dashboard["B20"].value == "Low"
-    assert dashboard["B21"].value == "Uptrend"
+    assert dashboard["B14"].value == "Hold"
+    assert dashboard["B15"].value == 72
+    assert dashboard["B16"].value == "Low"
+    assert dashboard["B17"].value == "Uptrend"
     assert dashboard.freeze_panes == "A3"
-    assert dashboard.auto_filter.ref == "A3:B28"
+    assert dashboard.auto_filter.ref == "A3:B24"
     assert len(dashboard._charts) == 1
     assert len(list(dashboard.conditional_formatting)) > 0
 
@@ -117,48 +129,29 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     reasons = workbook["Reasons"]
     assert reasons["B2"].value == "Market classified as Uptrend."
 
-    proxy = workbook["Proxy Signal"]
-    assert proxy["A1"].value == "Field"
-    assert proxy["B12"].value == PROXY_WARNING
-
-
-def test_proxy_signal_is_rendered_with_clear_warning() -> None:
-    context = _presentation_context(
-        proxy_signal=ProxySignalSnapshot(
-            available=True,
-            provider_used="fixture",
-            symbols_used={"MU": "MU-PERP"},
-            tickers_covered=["MU"],
-            proxy_ai_1d_change=None,
-            proxy_hbm_1d_change=-5.4,
-            proxy_risk_level="Strong Risk-Off",
-            proxy_data_quality="Partial",
-            decision_influenced=True,
-        )
-    )
-
-    payload = context_to_dict(context)
-
-    assert payload["decision_influenced_by_proxy"] is False
-    assert payload["proxy_intraday_signal"]["available"] is True
-    assert payload["proxy_intraday_signal"]["decision_influenced"] is True
-    assert payload["proxy_intraday_signal"]["warning"] == PROXY_WARNING
-    assert PROXY_WARNING in payload["data_warnings"]
+    history = workbook["History Readiness"]
+    assert history["A1"].value == "Ticker"
+    assert history["B2"].value == 21
+    assert history["C2"].value == "Yes"
+    assert history["D3"].value == "No"
 
 
 def test_data_quality_warnings_are_rendered_for_missing_inputs() -> None:
     context = _presentation_context(
         basket=BasketSnapshot(date="2026-06-26"),
         metadata=RunMetadata(
-            data_source="csv",
+            data_source="Manual Upload Only",
             provider_used="csv",
             last_update="2026-06-26",
             data_quality="Degraded",
             missing_tickers=["MSFT", "000660.KS"],
-            fallback_used=True,
+            fallback_used=False,
             data_quality_score=40,
             cache_coverage_percentage=50.0,
             recommendation_degraded=True,
+            history_depth_by_ticker={"MSFT": 0, "000660.KS": 2},
+            five_day_readiness={"MSFT": False, "000660.KS": False},
+            twenty_day_readiness={"MSFT": False, "000660.KS": False},
         ),
     )
 
@@ -166,14 +159,14 @@ def test_data_quality_warnings_are_rendered_for_missing_inputs() -> None:
 
     assert payload["risk_score_display"] == "N/A"
     assert payload["relative_ratio_display"] == "N/A"
-    assert "MSFT" in payload["data_warnings"][1]
-    assert "Risk Score" in payload["data_warnings"][3]
+    assert any("MSFT" in warning for warning in payload["data_warnings"])
+    assert any("5D readiness" in warning for warning in payload["data_warnings"])
+    assert any("Risk Score" in warning for warning in payload["data_warnings"])
 
 
 def _presentation_context(
     basket: BasketSnapshot | None = None,
     metadata: RunMetadata | None = None,
-    proxy_signal: ProxySignalSnapshot | None = None,
 ):
     decision = DecisionResult(
         date="2026-06-26",
@@ -224,7 +217,7 @@ def _presentation_context(
         technical=technical,
         portfolio=portfolio,
         metadata=metadata or RunMetadata(
-            data_source="csv",
+            data_source="Manual Upload Only",
             provider_used="csv",
             last_update="2026-06-26",
             data_quality="OK",
@@ -232,5 +225,4 @@ def _presentation_context(
             data_quality_score=100,
             cache_coverage_percentage=100.0,
         ),
-        proxy_signal=proxy_signal,
     )

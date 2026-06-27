@@ -44,7 +44,7 @@ class AppConfig:
 
 @dataclass(frozen=True)
 class DataConfig:
-    primary_provider: str = "multi"
+    primary_provider: str = "csv"
     fallback_provider: str = "csv"
     lookback_days: int = 260
     required_tickers: list[str] = field(default_factory=list)
@@ -391,7 +391,7 @@ class ReportsConfig:
 
 @dataclass(frozen=True)
 class ProxyConfig:
-    enabled: bool = True
+    enabled: bool = False
     provider_priority: list[str] = field(
         default_factory=lambda: ["okx", "binance"]
     )

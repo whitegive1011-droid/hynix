@@ -27,6 +27,11 @@ def test_github_actions_runs_tests_before_deployment() -> None:
     assert "reports/history.csv" in workflow
     assert "reports/execution.log" in workflow
     assert "reports/deployment_summary.txt" in workflow
+    assert "python main.py --provider csv --output-dir reports --no-input" in workflow
+    assert "yfinance" not in workflow.lower()
+    assert "stooq" not in workflow.lower()
+    assert "alphavantage" not in workflow.lower()
+    assert "finnhub" not in workflow.lower()
     assert "secrets." not in workflow
 
 
@@ -49,7 +54,11 @@ def test_manual_price_issue_workflow_imports_and_deploys() -> None:
     assert "python -m pytest" in workflow
     assert "data/manual/daily_manual_prices.csv" in workflow
     assert "data/cache/market_cache.csv" in workflow
-    assert "data/proxy/tradable_proxy_prices.csv" in workflow
+    assert "data/proxy/tradable_proxy_prices.csv" not in workflow
+    assert "yfinance" not in workflow.lower()
+    assert "stooq" not in workflow.lower()
+    assert "alphavantage" not in workflow.lower()
+    assert "finnhub" not in workflow.lower()
     assert "actions/deploy-pages@v4" in workflow
     assert "gh issue comment" in workflow
     assert "--field state=closed" in workflow
@@ -58,3 +67,4 @@ def test_manual_price_issue_workflow_imports_and_deploys() -> None:
     assert "Manual Prices YYYY-MM-DD" in issue_form
     assert "Trading date" in issue_form
     assert "date,ticker,close,change_pct,market_cap,source,note" in issue_form
+    assert "manual_upload" in issue_form

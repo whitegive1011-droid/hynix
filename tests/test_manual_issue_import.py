@@ -10,32 +10,45 @@ import pytest
 from aios.data.models import PRICE_COLUMNS
 from aios.manual.importer import ManualIssueImporter
 from aios.manual.issue_parser import (
-    MANUAL_DAILY_PRICE_COLUMNS,
     ManualPriceIssueParseError,
     parse_manual_price_issue,
 )
 from main import main
 
 
-def test_parse_valid_issue_body() -> None:
+def test_parse_valid_issue_body_normalizes_source() -> None:
     parsed = parse_manual_price_issue(_issue_body())
 
     assert parsed.trading_date == "2026-06-27"
     assert parsed.latest_date == "2026-06-27"
     assert parsed.tickers == ["000660.KS", "005930.KS", "7709.HK", "MU"]
     assert parsed.rows.loc[parsed.rows["ticker"] == "MU", "close"].iloc[0] == 1155.0
+    assert set(parsed.rows["source"]) == {"manual_upload"}
     assert "Missing required basket tickers" in parsed.warnings[0]
 
 
-def test_reject_malformed_csv() -> None:
+def test_accepts_optional_columns_missing() -> None:
+    body = _issue_body(
+        "date,ticker,close\n"
+        "2026-06-27,MU,1155",
+    )
+
+    parsed = parse_manual_price_issue(body)
+
+    assert parsed.rows["ticker"].iloc[0] == "MU"
+    assert parsed.rows["source"].iloc[0] == "manual_upload"
+    assert parsed.rows["note"].iloc[0] == ""
+
+
+def test_reject_missing_required_close_column() -> None:
     body = """
 ### Trading date
 2026-06-27
 
 ### Price CSV
 ```csv
-date,ticker,close
-2026-06-27,MU,1155
+date,ticker
+2026-06-27,MU
 ```
 """.strip()
 
@@ -65,17 +78,17 @@ def test_duplicate_date_ticker_keeps_last_price() -> None:
     assert len(parsed.rows) == 1
     assert parsed.rows["close"].iloc[0] == 116.5
     assert parsed.rows["note"].iloc[0] == "corrected"
+    assert parsed.rows["source"].iloc[0] == "manual_upload"
 
 
-def test_import_issue_upserts_manual_rows_into_cache(tmp_path: Path) -> None:
+def test_import_issue_upserts_all_sources_into_cache(tmp_path: Path) -> None:
     paths = _write_issue_import_files(tmp_path)
-    initial_cache = _write_cache_fixture(paths["cache"], latest_offset=24)
-    body_path = paths["issue"]
-    body_path.write_text(
+    _write_cache_fixture(paths["cache"], latest_offset=24)
+    paths["issue"].write_text(
         _issue_body(
             "date,ticker,close,change_pct,market_cap,source,note\n"
-            "2026-01-26,AI1,333.00,1.2,,manual,corrected AI\n"
-            "2026-01-26,HBM1,444.00,2.4,,manual,corrected HBM",
+            "2026-01-26,AI1,333.00,1.2,,binance_proxy,accepted\n"
+            "2026-01-26,HBM1,444.00,2.4,,futu_official,accepted",
             trading_date="2026-01-26",
         ),
         encoding="utf-8",
@@ -84,9 +97,9 @@ def test_import_issue_upserts_manual_rows_into_cache(tmp_path: Path) -> None:
     importer = ManualIssueImporter(
         config_path=paths["config"],
         portfolio_path=paths["portfolio"],
-        issue_body_file=body_path,
+        issue_body_file=paths["issue"],
         manual_output_path=paths["manual"],
-        cache_output_path=initial_cache,
+        cache_output_path=paths["cache"],
         output_dir=paths["reports"],
     )
 
@@ -95,18 +108,19 @@ def test_import_issue_upserts_manual_rows_into_cache(tmp_path: Path) -> None:
 
     assert summary.imported_tickers == ["AI1", "HBM1"]
     assert summary_again.imported_rows == 2
+    assert not paths["proxy"].exists()
 
     manual = pd.read_csv(paths["manual"])
     cache = pd.read_csv(paths["cache"])
     assert manual.duplicated(["date", "ticker"]).sum() == 0
     assert cache.duplicated(["date", "ticker"]).sum() == 0
+    assert set(manual["source"]) == {"manual_upload"}
     assert cache[(cache["date"] == "2026-01-26") & (cache["ticker"] == "AI1")][
         "close"
     ].iloc[0] == 333.0
-    assert set(manual["input_source"]) == {"GitHub Issue"}
 
 
-def test_import_issue_command_regenerates_reports_with_manual_metadata(
+def test_import_issue_command_regenerates_reports_with_manual_only_metadata(
     tmp_path: Path,
 ) -> None:
     paths = _write_issue_import_files(tmp_path)
@@ -141,256 +155,15 @@ def test_import_issue_command_regenerates_reports_with_manual_metadata(
     ) == 0
 
     signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
+    assert signal["data_source"] == "Manual Upload Only"
     assert signal["manual_mobile_input_used"] is True
     assert signal["latest_manual_input_date"] == "2026-01-26"
-    assert signal["manual_source"] == "GitHub Issue"
+    assert signal["manual_source"] == "manual_upload"
     assert signal["manual_tickers_used"] == ["AI1", "HBM1"]
-    assert signal["provider_by_ticker"]["AI1"] == "GitHub Issue"
+    assert signal["provider_by_ticker"]["AI1"] == "manual_upload"
+    assert "proxy_intraday_signal" not in signal
     assert (paths["reports"] / "dashboard.html").exists()
     assert (paths["reports"] / "investment_dashboard.xlsx").exists()
-
-
-def test_import_issue_proxy_rows_feed_proxy_signal_without_official_cache(
-    tmp_path: Path,
-) -> None:
-    paths = _write_issue_import_files(tmp_path)
-    _write_cache_fixture(paths["cache"], latest_offset=24)
-    paths["config"].write_text(
-        f"""
-app:
-  output_dir: {paths["reports"]}
-  log_level: INFO
-data:
-  primary_provider: csv
-  csv_path: {paths["cache"]}
-  lookback_days: 60
-  required_tickers:
-    - AAPL
-    - MSFT
-    - TSLA
-    - MU
-baskets:
-  ai:
-    AAPL: 0.3333
-    MSFT: 0.3333
-    TSLA: 0.3334
-  hbm:
-    MU: 1.0
-proxy:
-  enabled: false
-  symbols:
-    NVDA: NVDAUSDT
-    AAPL: AAPLUSDT
-    MSFT: MSFTUSDT
-    TSLA: TSLAUSDT
-    MU: MUUSDT
-  output_path: {paths["proxy"]}
-coach:
-  interactive_input: false
-""",
-        encoding="utf-8",
-    )
-    paths["issue"].write_text(
-        _issue_body(
-            "date,ticker,close,change_pct,market_cap,source,note\n"
-            "2026-01-26,NVDA,193.69,-0.06,,binance_proxy,\"NVDAUSDT proxy\"\n"
-            "2026-01-26,AAPL,281.38,1.88,,binance_proxy,\"AAPLUSDT proxy\"\n"
-            "2026-01-26,MSFT,374.68,4.99,,binance_proxy,\"MSFTUSDT proxy\"\n"
-            "2026-01-26,TSLA,380.47,2.41,,binance_proxy,\"TSLAUSDT proxy\"\n"
-            "2026-01-26,MU,1138.19,-1.55,,binance_proxy,\"MUUSDT proxy\"",
-            trading_date="2026-01-26",
-        ),
-        encoding="utf-8",
-    )
-
-    assert main(
-        [
-            "import-issue",
-            "--config",
-            str(paths["config"]),
-            "--portfolio",
-            str(paths["portfolio"]),
-            "--issue-body-file",
-            str(paths["issue"]),
-            "--manual-output",
-            str(paths["manual"]),
-            "--cache-output",
-            str(paths["cache"]),
-            "--output-dir",
-            str(paths["reports"]),
-            "--no-input",
-        ]
-    ) == 0
-
-    cache = pd.read_csv(paths["cache"])
-    proxy_cache = pd.read_csv(paths["proxy"])
-    signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
-
-    assert {"NVDA", "AAPL", "MSFT", "TSLA", "MU"}.isdisjoint(
-        set(cache["ticker"])
-    )
-    assert set(proxy_cache["ticker"]) == {"NVDA", "AAPL", "MSFT", "TSLA", "MU"}
-    assert signal["date"] == "2026-01-26"
-    assert signal["proxy_intraday_signal"]["available"] is True
-    assert signal["proxy_intraday_signal"]["provider_used"] == "binance_proxy"
-    assert signal["proxy_intraday_signal"]["proxy_data_quality"] == "OK"
-    assert signal["proxy_intraday_signal"]["proxy_ai_1d_change"] is not None
-    assert signal["proxy_intraday_signal"]["proxy_hbm_1d_change"] is not None
-
-
-def test_proxy_issue_import_cleans_legacy_proxy_rows_from_official_files(
-    tmp_path: Path,
-) -> None:
-    paths = _write_issue_import_files(tmp_path)
-    _write_cache_fixture(paths["cache"], latest_offset=24)
-    _write_proxy_import_config(paths)
-    csv_text = (
-        "date,ticker,close,change_pct,market_cap,source,note\n"
-        "2026-01-26,AAPL,281.38,1.88,,binance_proxy,\"AAPLUSDT proxy\"\n"
-        "2026-01-26,MSFT,374.68,4.99,,binance_proxy,\"MSFTUSDT proxy\"\n"
-        "2026-01-26,TSLA,380.47,2.41,,binance_proxy,\"TSLAUSDT proxy\"\n"
-        "2026-01-26,MU,1138.19,-1.55,,binance_proxy,\"MUUSDT proxy\""
-    )
-    paths["issue"].write_text(
-        _issue_body(csv_text, trading_date="2026-01-26"),
-        encoding="utf-8",
-    )
-    legacy_rows = parse_manual_price_issue(paths["issue"].read_text()).rows
-    legacy_manual = legacy_rows.copy()
-    legacy_manual["input_source"] = "GitHub Issue"
-    legacy_manual["imported_at"] = "2026-01-26T00:00:00+00:00"
-    paths["manual"].parent.mkdir(parents=True, exist_ok=True)
-    legacy_manual[MANUAL_DAILY_PRICE_COLUMNS].to_csv(paths["manual"], index=False)
-
-    legacy_cache = pd.concat(
-        [
-            pd.read_csv(paths["cache"]),
-            pd.DataFrame(
-                [
-                    {
-                        "date": row["date"],
-                        "ticker": row["ticker"],
-                        "open": row["close"],
-                        "high": row["close"],
-                        "low": row["close"],
-                        "close": row["close"],
-                        "adj_close": row["close"],
-                        "volume": 0,
-                    }
-                    for row in legacy_rows.to_dict(orient="records")
-                ],
-                columns=PRICE_COLUMNS,
-            ),
-        ],
-        ignore_index=True,
-    )
-    legacy_cache.to_csv(paths["cache"], index=False)
-
-    assert main(
-        [
-            "import-issue",
-            "--config",
-            str(paths["config"]),
-            "--portfolio",
-            str(paths["portfolio"]),
-            "--issue-body-file",
-            str(paths["issue"]),
-            "--manual-output",
-            str(paths["manual"]),
-            "--cache-output",
-            str(paths["cache"]),
-            "--output-dir",
-            str(paths["reports"]),
-            "--no-input",
-        ]
-    ) == 0
-
-    manual = pd.read_csv(paths["manual"])
-    cache = pd.read_csv(paths["cache"])
-    signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
-
-    assert manual.empty
-    assert {"AAPL", "MSFT", "TSLA", "MU"}.isdisjoint(set(cache["ticker"]))
-    assert signal["date"] == "2026-01-26"
-    assert signal["manual_mobile_input_used"] is True
-    assert signal["manual_source"] == "GitHub Issue Proxy"
-    assert signal["manual_tickers_used"] == ["AAPL", "MSFT", "MU", "TSLA"]
-    assert signal["proxy_intraday_signal"]["proxy_data_quality"] == "OK"
-    assert signal["proxy_intraday_signal"]["proxy_ai_1d_change"] is not None
-    assert signal["proxy_intraday_signal"]["proxy_hbm_1d_change"] is not None
-
-
-def test_official_issue_input_overrides_legacy_proxy_metadata(
-    tmp_path: Path,
-) -> None:
-    paths = _write_issue_import_files(tmp_path)
-    _write_cache_fixture(paths["cache"], latest_offset=24)
-    _write_proxy_import_config(paths)
-    paths["proxy"].parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(
-        [
-            {
-                "date": "2026-01-26",
-                "ticker": "AAPL",
-                "proxy_symbol": "AAPLUSDT",
-                "proxy_price": 281.38,
-                "proxy_change_pct": 1.88,
-                "source": "GitHub Issue",
-                "provider": "binance_proxy",
-                "timestamp": "2026-01-26T00:00:00+00:00",
-                "session": "manual",
-                "warning": "Tradable proxy price is not official equity market data.",
-            },
-            {
-                "date": "2026-01-26",
-                "ticker": "MU",
-                "proxy_symbol": "MUUSDT",
-                "proxy_price": 1138.19,
-                "proxy_change_pct": -1.55,
-                "source": "GitHub Issue",
-                "provider": "binance_proxy",
-                "timestamp": "2026-01-26T00:00:00+00:00",
-                "session": "manual",
-                "warning": "Tradable proxy price is not official equity market data.",
-            },
-        ]
-    ).to_csv(paths["proxy"], index=False)
-    paths["issue"].write_text(
-        _issue_body(
-            "date,ticker,close,change_pct,market_cap,source,note\n"
-            "2026-01-26,AAPL,201.00,1.25,,futu_official,\"official\"\n"
-            "2026-01-26,MSFT,510.50,0.80,,futu_official,\"official\"\n"
-            "2026-01-26,TSLA,380.66,2.53,,futu_official,\"official\"\n"
-            "2026-01-26,MU,115.50,-4.80,,futu_official,\"official\"",
-            trading_date="2026-01-26",
-        ),
-        encoding="utf-8",
-    )
-
-    assert main(
-        [
-            "import-issue",
-            "--config",
-            str(paths["config"]),
-            "--portfolio",
-            str(paths["portfolio"]),
-            "--issue-body-file",
-            str(paths["issue"]),
-            "--manual-output",
-            str(paths["manual"]),
-            "--cache-output",
-            str(paths["cache"]),
-            "--output-dir",
-            str(paths["reports"]),
-            "--no-input",
-        ]
-    ) == 0
-
-    signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
-
-    assert signal["manual_mobile_input_used"] is True
-    assert signal["manual_source"] == "GitHub Issue"
-    assert signal["manual_tickers_used"] == ["AAPL", "MSFT", "MU", "TSLA"]
 
 
 def test_missing_required_ticker_warning_is_non_fatal() -> None:
@@ -405,6 +178,44 @@ def test_missing_required_ticker_warning_is_non_fatal() -> None:
     assert any("MSFT" in warning for warning in parsed.warnings)
 
 
+def test_missing_history_keeps_risk_score_na(tmp_path: Path) -> None:
+    paths = _write_issue_import_files(tmp_path)
+    paths["issue"].write_text(
+        _issue_body(
+            "date,ticker,close,change_pct,market_cap,source,note\n"
+            "2026-01-01,AI1,100,1,,binance,one day\n"
+            "2026-01-01,HBM1,120,1,,futu,one day",
+            trading_date="2026-01-01",
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "import-issue",
+            "--config",
+            str(paths["config"]),
+            "--portfolio",
+            str(paths["portfolio"]),
+            "--issue-body-file",
+            str(paths["issue"]),
+            "--manual-output",
+            str(paths["manual"]),
+            "--cache-output",
+            str(paths["cache"]),
+            "--output-dir",
+            str(paths["reports"]),
+            "--no-input",
+        ]
+    ) == 0
+
+    signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
+    assert signal["recommendation"] == "Uncertain"
+    assert signal["risk_score"] is None
+    assert signal["risk_score_display"] == "N/A"
+    assert signal["five_day_readiness"] == {"AI1": False, "HBM1": False}
+
+
 def _issue_body(
     csv_text: str | None = None,
     trading_date: str = "2026-06-27",
@@ -413,8 +224,8 @@ def _issue_body(
         "date,ticker,close,change_pct,market_cap,source,note\n"
         "2026-06-27,7709.HK,154.00,-14.20,,futu,\"HK intraday\"\n"
         "2026-06-27,000660.KS,2724000,-8.50,,naver,\"SK Hynix\"\n"
-        "2026-06-27,005930.KS,343500,-4.00,,naver,\"Samsung\"\n"
-        "2026-06-27,MU,1155.00,-4.80,,futu,\"overnight\""
+        "2026-06-27,005930.KS,343500,-4.00,,okx,\"Samsung\"\n"
+        "2026-06-27,MU,1155.00,-4.80,,binance_proxy,\"overnight\""
     )
     return f"""
 ### Trading date
@@ -436,6 +247,7 @@ def _write_issue_import_files(tmp_path: Path) -> dict[str, Path]:
     portfolio_path = tmp_path / "portfolio.yaml"
     cache_path = data_dir / "cache" / "market_cache.csv"
     manual_path = data_dir / "manual" / "daily_manual_prices.csv"
+    proxy_path = data_dir / "proxy" / "tradable_proxy_prices.csv"
     reports_dir = tmp_path / "reports"
     issue_path = tmp_path / "issue_body.txt"
     config_path.write_text(
@@ -455,15 +267,6 @@ baskets:
     AI1: 1.0
   hbm:
     HBM1: 1.0
-proxy:
-  enabled: false
-  symbols:
-    NVDA: NVDAUSDT
-    AAPL: AAPLUSDT
-    MSFT: MSFTUSDT
-    TSLA: TSLAUSDT
-    MU: MUUSDT
-  output_path: {data_dir / "proxy" / "tradable_proxy_prices.csv"}
 coach:
   interactive_input: false
 """,
@@ -486,47 +289,10 @@ cash:
         "portfolio": portfolio_path,
         "cache": cache_path,
         "manual": manual_path,
-        "proxy": data_dir / "proxy" / "tradable_proxy_prices.csv",
+        "proxy": proxy_path,
         "reports": reports_dir,
         "issue": issue_path,
     }
-
-
-def _write_proxy_import_config(paths: dict[str, Path]) -> None:
-    paths["config"].write_text(
-        f"""
-app:
-  output_dir: {paths["reports"]}
-  log_level: INFO
-data:
-  primary_provider: csv
-  csv_path: {paths["cache"]}
-  lookback_days: 60
-  required_tickers:
-    - AAPL
-    - MSFT
-    - TSLA
-    - MU
-baskets:
-  ai:
-    AAPL: 0.3333
-    MSFT: 0.3333
-    TSLA: 0.3334
-  hbm:
-    MU: 1.0
-proxy:
-  enabled: false
-  symbols:
-    AAPL: AAPLUSDT
-    MSFT: MSFTUSDT
-    TSLA: TSLAUSDT
-    MU: MUUSDT
-  output_path: {paths["proxy"]}
-coach:
-  interactive_input: false
-""",
-        encoding="utf-8",
-    )
 
 
 def _write_cache_fixture(cache_path: Path, latest_offset: int) -> Path:

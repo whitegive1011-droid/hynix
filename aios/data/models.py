@@ -68,6 +68,7 @@ class CacheCoverageReport:
     data_quality_score: int
     date_ranges: dict[str, tuple[str, str]] = field(default_factory=dict)
     last_available_dates: dict[str, str] = field(default_factory=dict)
+    row_counts: dict[str, int] = field(default_factory=dict)
     provider_by_ticker: dict[str, str] = field(default_factory=dict)
 
 

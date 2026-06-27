@@ -23,6 +23,8 @@ ISSUE_PRICE_COLUMNS = [
     "note",
 ]
 
+REQUIRED_ISSUE_PRICE_COLUMNS = ["date", "ticker", "close"]
+
 MANUAL_DAILY_PRICE_COLUMNS = [
     *ISSUE_PRICE_COLUMNS,
     "input_source",
@@ -216,13 +218,16 @@ def _read_issue_csv(csv_text: str) -> pd.DataFrame:
 
     frame.columns = [str(column).strip() for column in frame.columns]
     missing_columns = [
-        column for column in ISSUE_PRICE_COLUMNS if column not in frame.columns
+        column for column in REQUIRED_ISSUE_PRICE_COLUMNS if column not in frame.columns
     ]
     if missing_columns:
         raise ManualPriceIssueParseError(
             "Manual price CSV missing required columns: "
             + ", ".join(missing_columns)
         )
+    for column in ISSUE_PRICE_COLUMNS:
+        if column not in frame.columns:
+            frame[column] = ""
     return frame[ISSUE_PRICE_COLUMNS].copy()
 
 
@@ -250,7 +255,7 @@ def _normalize_issue_rows(frame: pd.DataFrame) -> pd.DataFrame:
                     "market_cap",
                     row_number,
                 ),
-                "source": _optional_string(row["source"]),
+                "source": "manual_upload",
                 "note": _optional_string(row["note"]),
             }
         )
@@ -272,7 +277,7 @@ def _looks_like_price_csv(text: str) -> bool:
         ),
         "",
     )
-    return first_line.startswith("date,ticker,close")
+    return first_line.startswith("date,ticker")
 
 
 def _validate_date(value: object, label: str) -> str:

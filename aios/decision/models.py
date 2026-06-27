@@ -103,6 +103,7 @@ class DecisionDataQuality:
 
     missing_tickers: list[str] = field(default_factory=list)
     stale_tickers: list[str] = field(default_factory=list)
+    insufficient_history_tickers: list[str] = field(default_factory=list)
     data_quality_score: int = 100
     required_basket_tickers_missing: bool = False
 

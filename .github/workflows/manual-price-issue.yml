@@ -96,7 +96,6 @@ jobs:
             reports/history.csv \
             reports/execution.log \
             reports/deployment_summary.txt
-          test ! -f data/proxy/tradable_proxy_prices.csv || git add -f data/proxy/tradable_proxy_prices.csv
           git diff --cached --quiet || git commit -m "chore: import manual prices from issue #${{ github.event.issue.number }} [skip ci]"
           git pull --rebase origin main
           git push origin HEAD:main

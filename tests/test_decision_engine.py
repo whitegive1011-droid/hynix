@@ -20,7 +20,6 @@ from aios.decision.models import (
 )
 from aios.market.baskets import calculate_basket_metrics
 from aios.market.indicators import add_technical_indicators
-from aios.proxy.models import ProxySignalSnapshot
 
 
 def test_decision_config_loads_rule_thresholds() -> None:
@@ -216,7 +215,7 @@ def test_low_data_quality_forces_uncertain_without_position_change() -> None:
     assert "data_quality.insufficient" in result.triggered_rules
 
 
-def test_missing_official_and_missing_proxy_remains_uncertain() -> None:
+def test_missing_required_basket_data_remains_uncertain() -> None:
     result = _engine().decide(
         _input(
             basket=BasketSnapshot(date="2026-06-26"),
@@ -227,7 +226,6 @@ def test_missing_official_and_missing_proxy_remains_uncertain() -> None:
                 data_quality_score=0,
                 required_basket_tickers_missing=True,
             ),
-            proxy_signal=ProxySignalSnapshot.empty(),
         )
     )
 
@@ -237,104 +235,23 @@ def test_missing_official_and_missing_proxy_remains_uncertain() -> None:
     assert result.proxy_influenced is False
 
 
-def test_proxy_only_neutral_signal_produces_watch_with_capped_confidence() -> None:
-    config = load_config("config.yaml")
+def test_insufficient_manual_history_forces_uncertain() -> None:
     result = _engine().decide(
         _input(
             basket=BasketSnapshot(date="2026-06-26"),
             technical=TechnicalSnapshot(date="2026-06-26", ticker="7709.HK"),
             shares=300,
             data_quality=DecisionDataQuality(
-                missing_tickers=["MSFT", "MU"],
-                data_quality_score=35,
-                required_basket_tickers_missing=True,
-            ),
-            proxy_signal=ProxySignalSnapshot(
-                available=True,
-                provider_used="fixture",
-                tickers_covered=["AAPL", "MSFT", "MU", "NVDA", "TSLA"],
-                proxy_ai_1d_change=0.5,
-                proxy_hbm_1d_change=0.2,
-                proxy_risk_level="Neutral",
-                proxy_data_quality="OK",
+                insufficient_history_tickers=["MSFT", "MU"],
+                data_quality_score=82,
             ),
         )
     )
 
-    assert result.recommendation == "Proxy-Based Watch"
-    assert result.confidence <= config.proxy.max_confidence_when_proxy_only
-    assert result.proxy_influenced is True
-    assert "Official equity data is incomplete." in result.reasons
-    assert (
-        "Tradable proxy data is used for intraday risk assessment only."
-        in result.reasons
-    )
-    assert "Proxy data is not official equity market data." in result.reasons
-
-
-def test_proxy_only_strong_risk_off_can_reduce_with_capped_confidence() -> None:
-    config = load_config("config.yaml")
-    result = _engine().decide(
-        _input(
-            basket=BasketSnapshot(date="2026-06-26"),
-            technical=TechnicalSnapshot(date="2026-06-26", ticker="7709.HK"),
-            shares=300,
-            data_quality=DecisionDataQuality(
-                missing_tickers=["MSFT", "MU"],
-                data_quality_score=35,
-                required_basket_tickers_missing=True,
-            ),
-            proxy_signal=ProxySignalSnapshot(
-                available=True,
-                provider_used="fixture",
-                tickers_covered=["AAPL", "MSFT", "MU", "NVDA", "TSLA"],
-                proxy_ai_1d_change=-2.5,
-                proxy_hbm_1d_change=-6.2,
-                proxy_risk_level="Strong Risk-Off",
-                proxy_data_quality="OK",
-            ),
-        )
-    )
-
-    assert result.recommendation == "Reduce 100 Shares"
-    assert result.suggested_position == 200
-    assert result.position_delta == -100
-    assert result.risk_level == RiskLevel.HIGH
-    assert result.confidence <= config.proxy.max_confidence_when_proxy_only
-
-
-def test_proxy_official_conflict_caps_confidence_when_official_data_complete() -> None:
-    config = load_config("config.yaml")
-    result = _engine().decide(
-        _input(
-            basket=_basket(),
-            technical=_technical(
-                close=120,
-                sma_20=110,
-                sma_50=100,
-                rsi14=62,
-                macd=3,
-                macd_signal=1,
-                adx14=28,
-            ),
-            shares=300,
-            proxy_signal=ProxySignalSnapshot(
-                available=True,
-                provider_used="fixture",
-                tickers_covered=["AAPL", "MSFT", "MU", "NVDA", "TSLA"],
-                proxy_ai_1d_change=-2.0,
-                proxy_hbm_1d_change=-6.0,
-                proxy_risk_level="Strong Risk-Off",
-                proxy_data_quality="OK",
-                proxy_official_conflict_flag=True,
-            ),
-        )
-    )
-
-    assert result.recommendation == "Hold"
-    assert result.confidence <= config.proxy.max_confidence_when_proxy_conflict
-    assert result.proxy_influenced is True
-    assert "proxy.official_conflict" in result.triggered_rules
+    assert result.recommendation == "Uncertain"
+    assert result.suggested_position == 300
+    assert result.position_delta == 0
+    assert any("Insufficient manual history" in reason for reason in result.reasons)
 
 
 def test_decision_engine_accepts_csv_provider_outputs(tmp_path: Path) -> None:
@@ -378,7 +295,7 @@ def test_decision_engine_accepts_csv_provider_outputs(tmp_path: Path) -> None:
 
 def _engine() -> DecisionEngine:
     config = load_config("config.yaml")
-    return DecisionEngine(config.decision, config.proxy)
+    return DecisionEngine(config.decision)
 
 
 def _input(
@@ -386,14 +303,12 @@ def _input(
     technical: TechnicalSnapshot,
     shares: int,
     data_quality: DecisionDataQuality | None = None,
-    proxy_signal: ProxySignalSnapshot | None = None,
 ) -> DecisionInput:
     return DecisionInput(
         basket=basket,
         technical=technical,
         position=PortfolioPosition(ticker="7709.HK", current_shares=shares),
         data_quality=data_quality or DecisionDataQuality(),
-        proxy_signal=proxy_signal or ProxySignalSnapshot.empty(),
     )
 
 

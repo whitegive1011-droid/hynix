@@ -15,16 +15,14 @@ body:
     id: price_csv
     attributes:
       label: Price CSV
-      description: "Paste the CSV header and one row per ticker. Official sources: futu_official, ibkr_official, manual_official, yahoo, stooq. Proxy sources: binance_proxy, okx_proxy."
+      description: "Paste the CSV header and one row per ticker. Any source value is accepted and normalized to manual_upload. Examples: futu, binance, okx, futu_official, binance_proxy."
       render: csv
       value: |
         date,ticker,close,change_pct,market_cap,source,note
-        2026-06-27,AAPL,201.00,1.25,,futu_official,"Official equity close"
-        2026-06-27,MSFT,510.50,0.80,,ibkr_official,"Official equity close"
-        2026-06-27,000660.KS,272400,-2.10,,manual_official,"Official KR equity close"
-        2026-06-27,MU,115.50,-4.80,,yahoo,"Official equity close"
-        2026-06-27,AAPL,281.38,1.88,,binance_proxy,"AAPLUSDT tradable proxy, not official equity data"
-        2026-06-27,MU,1138.19,-1.55,,binance_proxy,"MUUSDT tradable proxy, not official equity data"
+        2026-06-27,AAPL,281.38,1.88,,binance,"AAPLUSDT manual price"
+        2026-06-27,MSFT,374.68,4.99,,futu,"Manual price"
+        2026-06-27,000660.KS,1762.51,-0.12,,okx,"SK Hynix manual price"
+        2026-06-27,MU,1138.19,-1.55,,binance_proxy,"Accepted as manual upload"
     validations:
       required: true
   - type: textarea

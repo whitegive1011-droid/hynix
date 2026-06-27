@@ -20,6 +20,8 @@ def write_dashboard_html(
     environment = Environment(
         loader=FileSystemLoader(template_dir),
         autoescape=select_autoescape(["html", "xml"]),
+        trim_blocks=True,
+        lstrip_blocks=True,
     )
     template = environment.get_template("dashboard.html.j2")
     path.write_text(

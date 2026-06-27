@@ -49,3 +49,6 @@ class RunMetadata:
     latest_manual_input_date: str = "N/A"
     manual_tickers_used: list[str] = field(default_factory=list)
     manual_source: str = "None"
+    history_depth_by_ticker: dict[str, int] = field(default_factory=dict)
+    five_day_readiness: dict[str, bool] = field(default_factory=dict)
+    twenty_day_readiness: dict[str, bool] = field(default_factory=dict)
