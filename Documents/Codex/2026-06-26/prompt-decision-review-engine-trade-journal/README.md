@@ -18,6 +18,11 @@ AIOS does not place trades. No API keys are required for the default setup.
 Optional Alpha Vantage and Finnhub keys can be provided through environment
 variables and must not be committed.
 
+## User Guide
+
+For mobile and desktop data update steps, see
+[docs/USER_GUIDE.md](docs/USER_GUIDE.md).
+
 ## Local Setup
 
 ```bash
