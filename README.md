@@ -67,6 +67,35 @@ For Yahoo seeding:
   --output data/cache/market_cache.csv
 ```
 
+Manual cache import:
+
+```bash
+.venv/bin/python main.py cache-template \
+  --output data/cache/manual_prices_template.csv
+```
+
+Fill the template with real market prices. The minimum required columns are:
+
+```text
+date,ticker,close
+```
+
+Optional columns are:
+
+```text
+open,high,low,adj_close,volume
+```
+
+Import the filled CSV:
+
+```bash
+.venv/bin/python main.py import-cache \
+  --input data/cache/manual_prices_template.csv \
+  --output data/cache/market_cache.csv
+```
+
+The importer upserts rows by `date,ticker`, so running it multiple times will not create duplicate cache rows.
+
 Dry run:
 
 ```bash

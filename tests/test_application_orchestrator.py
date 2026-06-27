@@ -393,6 +393,69 @@ data:
     assert "Coverage: 66.67%" in captured.out
 
 
+def test_manual_cache_template_and_import_close_only_csv(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    config_path = tmp_path / "config.yaml"
+    template_path = tmp_path / "manual_template.csv"
+    cache_path = tmp_path / "market_cache.csv"
+    manual_path = tmp_path / "manual_prices.csv"
+    config_path.write_text(
+        """
+data:
+  required_tickers:
+    - AI1
+    - HBM1
+""",
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "cache-template",
+            "--config",
+            str(config_path),
+            "--output",
+            str(template_path),
+        ]
+    ) == 0
+    template = pd.read_csv(template_path)
+    assert set(template["ticker"]) == {"AI1", "HBM1"}
+    assert {"date", "ticker", "close"}.issubset(template.columns)
+
+    manual_path.write_text(
+        """
+date,ticker,close
+2026-01-01,AI1,100
+2026-01-02,AI1,101
+2026-01-01,HBM1,110
+2026-01-02,HBM1,112
+""".lstrip(),
+        encoding="utf-8",
+    )
+    args = [
+        "import-cache",
+        "--config",
+        str(config_path),
+        "--input",
+        str(manual_path),
+        "--output",
+        str(cache_path),
+    ]
+    assert main(args) == 0
+    assert main(args) == 0
+
+    cache = pd.read_csv(cache_path)
+    assert list(cache.columns) == PRICE_COLUMNS
+    assert cache.duplicated(["date", "ticker"]).sum() == 0
+    assert set(cache["ticker"]) == {"AI1", "HBM1"}
+    assert set(cache["open"]) == set(cache["close"])
+    captured = capsys.readouterr()
+    assert "Missing tickers after import: None" in captured.out
+    assert "Coverage: 100.00%" in captured.out
+
+
 def _write_orchestrator_fixture(tmp_path: Path) -> Path:
     start = date(2026, 1, 1)
     rows = []
