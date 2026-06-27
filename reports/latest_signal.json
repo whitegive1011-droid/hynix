@@ -4,8 +4,8 @@
   "confidence": 38,
   "risk_level": "Low",
   "market_mode": "Mixed",
-  "suggested_position": 300,
-  "current_position": 300,
+  "suggested_position": 400,
+  "current_position": 400,
   "position_delta": 0,
   "top_reasons": [
     "Market classified as Mixed.",
@@ -87,6 +87,6 @@
   ],
   "portfolio": {
     "ticker": "7709.HK",
-    "current_shares": 300
+    "current_shares": 400
   }
 }
