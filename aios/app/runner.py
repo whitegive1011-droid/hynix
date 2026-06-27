@@ -818,7 +818,10 @@ def _metadata_with_manual_proxy_input(
     metadata: RunMetadata,
     proxy_prices: pd.DataFrame,
 ) -> RunMetadata:
-    proxy_metadata = _manual_proxy_metadata(proxy_prices)
+    proxy_metadata = _manual_proxy_metadata(
+        proxy_prices,
+        overridden_tickers=metadata.manual_tickers_used,
+    )
     if not proxy_metadata.get("used"):
         return metadata
 
@@ -847,7 +850,10 @@ def _metadata_with_manual_proxy_input(
     )
 
 
-def _manual_proxy_metadata(proxy_prices: pd.DataFrame) -> dict[str, object]:
+def _manual_proxy_metadata(
+    proxy_prices: pd.DataFrame,
+    overridden_tickers: list[str] | None = None,
+) -> dict[str, object]:
     if proxy_prices.empty:
         return _default_manual_metadata()
 
@@ -864,6 +870,11 @@ def _manual_proxy_metadata(proxy_prices: pd.DataFrame) -> dict[str, object]:
         | provider.str.contains("proxy", case=False, na=False)
         | session.str.contains("manual", case=False, na=False)
     ].copy()
+    overridden = set(overridden_tickers or [])
+    if overridden:
+        manual_proxy = manual_proxy[
+            ~manual_proxy["ticker"].astype(str).isin(overridden)
+        ]
     if manual_proxy.empty:
         return _default_manual_metadata()
 

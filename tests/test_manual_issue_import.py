@@ -320,6 +320,79 @@ def test_proxy_issue_import_cleans_legacy_proxy_rows_from_official_files(
     assert signal["proxy_intraday_signal"]["proxy_hbm_1d_change"] is not None
 
 
+def test_official_issue_input_overrides_legacy_proxy_metadata(
+    tmp_path: Path,
+) -> None:
+    paths = _write_issue_import_files(tmp_path)
+    _write_cache_fixture(paths["cache"], latest_offset=24)
+    _write_proxy_import_config(paths)
+    paths["proxy"].parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "date": "2026-01-26",
+                "ticker": "AAPL",
+                "proxy_symbol": "AAPLUSDT",
+                "proxy_price": 281.38,
+                "proxy_change_pct": 1.88,
+                "source": "GitHub Issue",
+                "provider": "binance_proxy",
+                "timestamp": "2026-01-26T00:00:00+00:00",
+                "session": "manual",
+                "warning": "Tradable proxy price is not official equity market data.",
+            },
+            {
+                "date": "2026-01-26",
+                "ticker": "MU",
+                "proxy_symbol": "MUUSDT",
+                "proxy_price": 1138.19,
+                "proxy_change_pct": -1.55,
+                "source": "GitHub Issue",
+                "provider": "binance_proxy",
+                "timestamp": "2026-01-26T00:00:00+00:00",
+                "session": "manual",
+                "warning": "Tradable proxy price is not official equity market data.",
+            },
+        ]
+    ).to_csv(paths["proxy"], index=False)
+    paths["issue"].write_text(
+        _issue_body(
+            "date,ticker,close,change_pct,market_cap,source,note\n"
+            "2026-01-26,AAPL,201.00,1.25,,futu_official,\"official\"\n"
+            "2026-01-26,MSFT,510.50,0.80,,futu_official,\"official\"\n"
+            "2026-01-26,TSLA,380.66,2.53,,futu_official,\"official\"\n"
+            "2026-01-26,MU,115.50,-4.80,,futu_official,\"official\"",
+            trading_date="2026-01-26",
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "import-issue",
+            "--config",
+            str(paths["config"]),
+            "--portfolio",
+            str(paths["portfolio"]),
+            "--issue-body-file",
+            str(paths["issue"]),
+            "--manual-output",
+            str(paths["manual"]),
+            "--cache-output",
+            str(paths["cache"]),
+            "--output-dir",
+            str(paths["reports"]),
+            "--no-input",
+        ]
+    ) == 0
+
+    signal = json.loads((paths["reports"] / "latest_signal.json").read_text())
+
+    assert signal["manual_mobile_input_used"] is True
+    assert signal["manual_source"] == "GitHub Issue"
+    assert signal["manual_tickers_used"] == ["AAPL", "MSFT", "MU", "TSLA"]
+
+
 def test_missing_required_ticker_warning_is_non_fatal() -> None:
     parsed = parse_manual_price_issue(
         _issue_body(
