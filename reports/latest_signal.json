@@ -24,7 +24,7 @@
   "provider_used": "csv",
   "last_update": "2026-06-27",
   "data_quality": "Degraded",
-  "fallback_used": false,
+  "fallback_used": true,
   "missing_tickers": [
     "7747.HK",
     "META",
@@ -35,7 +35,7 @@
   "provider_by_ticker": {
     "000660.KS": "GitHub Issue",
     "005930.KS": "GitHub Issue",
-    "7709.HK": "unknown",
+    "7709.HK": "csv",
     "AAPL": "GitHub Issue",
     "AMZN": "GitHub Issue",
     "GOOGL": "GitHub Issue",
@@ -76,6 +76,7 @@
     "decision_influenced": false
   },
   "data_warnings": [
+    "Fallback market data provider was used; review recommendation confidence.",
     "Missing market data for required tickers: 7747.HK, META, QQQ, SOXX",
     "Recommendation is degraded because data quality is below the target.",
     "Manual mobile input was used from GitHub Issue on 2026-06-27.",
