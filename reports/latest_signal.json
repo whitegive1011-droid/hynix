@@ -1,6 +1,6 @@
 {
   "date": "2026-06-27",
-  "recommendation": "Cautious Hold",
+  "recommendation": "Proxy-Based Watch",
   "confidence": 58,
   "risk_level": "Low",
   "market_mode": "Mixed",
@@ -12,12 +12,12 @@
     "Official equity data is incomplete.",
     "Tradable proxy data is used for intraday risk assessment only.",
     "Proxy data is not official equity market data.",
-    "Proxy intraday risk level is Risk-On."
+    "Proxy intraday risk level is Neutral."
   ],
   "triggered_rules": [
     "proxy.official_data_incomplete",
     "proxy.intraday_signal",
-    "position.proxy_cautious_hold"
+    "position.proxy_watch"
   ],
   "relative_ratio": null,
   "risk_score": null,
@@ -25,86 +25,71 @@
   "risk_score_display": "N/A",
   "data_source": "csv",
   "provider_used": "csv",
-  "last_update": "2026-06-26",
+  "last_update": "2026-06-27",
   "data_quality": "Degraded",
-  "fallback_used": true,
+  "fallback_used": false,
   "missing_tickers": [
-    "7747.HK",
-    "000660.KS",
-    "005930.KS",
-    "MU",
-    "MSFT",
-    "GOOGL",
-    "AMZN",
-    "META",
-    "AAPL",
-    "TSLA",
-    "QQQ",
-    "SOXX"
+    "META"
   ],
   "stale_tickers": [],
   "provider_by_ticker": {
-    "7709.HK": "csv",
-    "NVDA": "csv"
+    "000660.KS": "GitHub Issue",
+    "005930.KS": "GitHub Issue",
+    "7709.HK": "GitHub Issue",
+    "7747.HK": "GitHub Issue",
+    "AAPL": "GitHub Issue",
+    "AMZN": "GitHub Issue",
+    "GOOGL": "GitHub Issue",
+    "MSFT": "GitHub Issue",
+    "MU": "GitHub Issue",
+    "NVDA": "GitHub Issue",
+    "QQQ": "GitHub Issue",
+    "SOXX": "GitHub Issue",
+    "TSLA": "GitHub Issue"
   },
-  "cache_coverage_percentage": 14.29,
-  "data_quality_score": 12,
+  "cache_coverage_percentage": 92.86,
+  "data_quality_score": 83,
   "recommendation_degraded": true,
   "manual_mobile_input_used": true,
   "latest_manual_input_date": "2026-06-27",
   "manual_tickers_used": [
     "000660.KS",
     "005930.KS",
+    "7709.HK",
+    "7747.HK",
     "AAPL",
     "AMZN",
     "GOOGL",
     "MSFT",
     "MU",
     "NVDA",
+    "QQQ",
+    "SOXX",
     "TSLA"
   ],
-  "manual_source": "GitHub Issue Proxy",
+  "manual_source": "GitHub Issue+GitHub Issue Proxy",
   "decision_influenced_by_proxy": true,
   "proxy_intraday_signal": {
     "available": true,
-    "provider_used": "binance+binance_proxy",
+    "provider_used": "binance",
     "symbols_used": {
-      "000660.KS": "SKHYNIXUSDT",
-      "005930.KS": "SAMSUNGUSDT",
-      "AAPL": "AAPLUSDT",
-      "AMZN": "AMZNUSDT",
-      "GOOGL": "GOOGLUSDT",
-      "META": "METAUSDT",
-      "MSFT": "MSFTUSDT",
-      "MU": "MUUSDT",
-      "NVDA": "NVDAUSDT",
-      "TSLA": "TSLAUSDT"
+      "META": "METAUSDT"
     },
     "tickers_covered": [
-      "000660.KS",
-      "005930.KS",
-      "AAPL",
-      "AMZN",
-      "GOOGL",
-      "META",
-      "MSFT",
-      "MU",
-      "NVDA",
-      "TSLA"
+      "META"
     ],
-    "proxy_ai_1d_change": 2.1203,
-    "proxy_hbm_1d_change": 2.1732,
-    "proxy_risk_level": "Risk-On",
-    "proxy_data_quality": "OK",
+    "proxy_ai_1d_change": 1.532,
+    "proxy_hbm_1d_change": null,
+    "proxy_risk_level": "Neutral",
+    "proxy_data_quality": "Partial",
     "proxy_official_conflict_flag": false,
     "warning": "Tradable proxy price is not official equity market data.",
     "decision_influenced": true
   },
   "data_warnings": [
-    "Fallback market data provider was used; review recommendation confidence.",
-    "Missing market data for required tickers: 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX",
+    "Missing market data for required tickers: META",
     "Recommendation is degraded because data quality is below the target.",
-    "Manual mobile input was used from GitHub Issue Proxy on 2026-06-27.",
+    "Manual mobile input was used from GitHub Issue+GitHub Issue Proxy on 2026-06-27.",
     "Tradable proxy price is not official equity market data.",
     "Unavailable indicators due to insufficient source data: Relative Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
@@ -151,8 +136,8 @@
     },
     {
       "label": "MACD",
-      "value": 0.4901859399834354,
-      "display_value": "0.49"
+      "value": 12.097775751361457,
+      "display_value": "12.10"
     }
   ],
   "portfolio": {

@@ -1,1 +1,14 @@
 date,ticker,close,change_pct,market_cap,source,note,input_source,imported_at
+2026-06-27,000660.KS,2673000.0,-8.36,,futu_official,SK Hynix official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,005930.KS,226.7,4.53,,futu_official,Samsung official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,7709.HK,157.0,-13.93,,futu_official,HK 2x Hynix ETF official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,7747.HK,176.35,-10.6,,futu_official,HK 2x Samsung ETF official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,AAPL,281.57,1.65,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,AMZN,233.49,2.58,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,GOOGL,340.28,0.26,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,MSFT,375.61,5.0,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,MU,1143.47,0.48,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,NVDA,192.53,-1.64,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,QQQ,706.52,-1.38,,futu_official,QQQ official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,SOXX,589.94,-5.64,,futu_official,SOXX official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
+2026-06-27,TSLA,380.66,2.53,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
