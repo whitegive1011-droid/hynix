@@ -29,7 +29,8 @@ After submission, GitHub Actions will:
 - Parse the issue body
 - Validate the CSV
 - Update `data/manual/daily_manual_prices.csv`
-- Upsert prices into `data/cache/market_cache.csv`
+- Upsert official/manual equity prices into `data/cache/market_cache.csv`
+- Upsert tradable proxy prices into `data/proxy/tradable_proxy_prices.csv`
 - Regenerate `latest_signal.json`, `investment_dashboard.xlsx`, and
   `dashboard.html`
 - Deploy the dashboard to GitHub Pages
@@ -51,10 +52,10 @@ Example:
 
 ```csv
 date,ticker,close,change_pct,market_cap,source,note
-2026-06-27,7709.HK,154.00,-14.20,,futu,"HK intraday"
-2026-06-27,000660.KS,2724000,-8.50,,naver,"SK Hynix"
-2026-06-27,005930.KS,343500,-4.00,,naver,"Samsung"
-2026-06-27,MU,115.50,-4.80,,futu,"overnight"
+2026-06-27,AAPL,201.00,1.25,,futu_official,"Official equity close"
+2026-06-27,MSFT,510.50,0.80,,ibkr_official,"Official equity close"
+2026-06-27,000660.KS,272400,-2.10,,manual_official,"Official KR equity close"
+2026-06-27,MU,115.50,-4.80,,yahoo,"Official equity close"
 ```
 
 Column notes:
@@ -64,11 +65,68 @@ Column notes:
 - `close`: Required. Must be a real positive market price.
 - `change_pct`: Optional. Daily percentage change, if available.
 - `market_cap`: Optional. Market capitalization, if available.
-- `source`: Optional but recommended. Example: `futu`, `naver`, `yahoo`.
+- `source`: Required for clean routing. Use one of the official or proxy
+  source names below.
 - `note`: Optional. Short context about the price.
 
 Rows are upserted by `date,ticker`. If the same ticker and date are submitted
 again, the newest submission replaces the older row.
+
+### Source Naming Rules
+
+Use official/manual equity sources when the row is official equity market data:
+
+```text
+futu_official
+ibkr_official
+manual_official
+yahoo
+stooq
+```
+
+Official/manual equity rows are imported into:
+
+```text
+data/cache/market_cache.csv
+```
+
+Use tradable proxy sources when the row is from a tokenized stock, perpetual,
+synthetic, or other tradable proxy market:
+
+```text
+binance_proxy
+okx_proxy
+```
+
+Tradable proxy rows are imported into:
+
+```text
+data/proxy/tradable_proxy_prices.csv
+```
+
+Proxy data is used only for the `Proxy Intraday Market Signal`. It must not be
+used as official equity close data, and it must not be used to calculate
+official 5D/20D returns, Relative Ratio, or Risk Score.
+
+Official/manual equity examples:
+
+```csv
+date,ticker,close,change_pct,market_cap,source,note
+2026-06-27,AAPL,201.00,1.25,,futu_official,"Official equity close"
+2026-06-27,MSFT,510.50,0.80,,ibkr_official,"Official equity close"
+2026-06-27,000660.KS,272400,-2.10,,manual_official,"Official KR equity close"
+2026-06-27,MU,115.50,-4.80,,yahoo,"Official equity close"
+```
+
+Tradable proxy examples:
+
+```csv
+date,ticker,close,change_pct,market_cap,source,note
+2026-06-27,AAPL,281.38,1.88,,binance_proxy,"AAPLUSDT tradable proxy, not official equity data"
+2026-06-27,MSFT,374.68,4.99,,binance_proxy,"MSFTUSDT tradable proxy, not official equity data"
+2026-06-27,MU,1138.19,-1.55,,binance_proxy,"MUUSDT tradable proxy, not official equity data"
+2026-06-27,000660.KS,1762.51,-0.12,,okx_proxy,"SK Hynix tradable proxy, not official KR equity data"
+```
 
 ## 3. Required Tickers And Optional Tickers
 
@@ -137,6 +195,7 @@ The dashboard should show:
 - Manual mobile input status
 - Latest manual input date
 - Manual tickers used
+- Proxy Intraday Market Signal when proxy rows are available
 - Missing ticker warnings
 - Key indicators
 
@@ -240,8 +299,11 @@ Common causes:
 - The cache has the product ticker but not the AI/HBM basket tickers
 - Live providers failed and the CSV cache is incomplete
 - Historical rows do not cover enough days for 5D or 20D calculations
+- Proxy prices are available, but official historical equity rows are missing
 
 This is expected behavior. AIOS should not invent missing market data.
+Proxy rows can improve intraday awareness, but they do not replace official
+historical data for official 5D/20D metrics or Risk Score.
 
 ## 9. Data History Requirements
 
@@ -249,6 +311,8 @@ Return and indicator calculations need enough historical rows.
 
 - `5D` requires at least 6 trading days.
 - `20D` requires at least 21 trading days.
+- Official 5D/20D returns and Risk Score require official/manual equity rows,
+  not proxy rows.
 
 For best results, keep at least 21 trading days for every core basket ticker:
 
@@ -273,8 +337,10 @@ If only today's prices are imported, the cache freshness improves, but 5D and
 - Do not fill missing prices with guessed values.
 - Missing data should remain `N/A`.
 - `Uncertain` is expected when basket data is incomplete.
+- Do not label proxy prices as official sources.
+- Do not use `binance_proxy` or `okx_proxy` rows to calculate official
+  5D/20D Risk Score.
 - A lower-confidence recommendation is safer than a confident recommendation
   based on incomplete market context.
 - Every recommendation should remain explainable and traceable to objective
   data.
-
