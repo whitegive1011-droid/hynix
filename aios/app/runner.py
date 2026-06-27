@@ -31,6 +31,9 @@ from aios.decision.models import (
 )
 from aios.market.baskets import calculate_basket_metrics
 from aios.market.indicators import add_technical_indicators
+from aios.proxy.models import PROXY_PRICE_COLUMNS, ProxyPriceRequest, ProxySignalSnapshot
+from aios.proxy.providers import create_tradable_proxy_price_provider
+from aios.proxy.signal import ProxySignalEngine
 from aios.reports.models import build_presentation_context
 from aios.reports.deployment import write_deployment_summary
 from aios.reports.presentation import generate_presentation_outputs
@@ -139,6 +142,8 @@ class AiosRunner:
         run_timestamp = current_run_timestamp(context.config.app.timezone)
         run_id = run_id_from_timestamp(run_timestamp)
         prices, metadata = self._fetch_market_data(context)
+        proxy_prices = self._fetch_proxy_prices(context)
+        proxy_latest_date = _proxy_latest_date(proxy_prices)
         history = prepare_history_frame(
             prices=prices,
             run_id=run_id,
@@ -150,25 +155,49 @@ class AiosRunner:
             logging.info("Dry run enabled. Skipping history and report writes.")
         else:
             self._store_history(context, history)
+            self._store_proxy_prices(context, proxy_prices)
 
-        market_state = self._build_market_state(context, prices)
+        market_state = self._build_market_state(
+            context,
+            prices,
+            fallback_date=proxy_latest_date or run_timestamp[:10],
+        )
+        decision_data_quality = self._decision_data_quality(context, metadata)
+        if decision_data_quality.required_basket_tickers_missing:
+            market_state = replace(
+                market_state,
+                basket=self._mask_incomplete_basket_metrics(market_state.basket),
+            )
         portfolio_state = self._build_portfolio_state(
             context,
             market_state.technical.ticker,
+        )
+        proxy_signal = self._build_proxy_signal(
+            context=context,
+            proxy_prices=proxy_prices,
+            official_basket=market_state.basket,
+            manual_tickers=metadata.manual_tickers_used,
         )
         decision_input = DecisionInput(
             basket=market_state.basket,
             technical=market_state.technical,
             position=portfolio_state.to_position(),
-            data_quality=self._decision_data_quality(context, metadata),
+            data_quality=decision_data_quality,
+            proxy_signal=proxy_signal,
         )
-        decision = DecisionEngine(context.config.decision).decide(decision_input)
+        decision = DecisionEngine(
+            context.config.decision,
+            context.config.proxy,
+        ).decide(decision_input)
+        if decision.proxy_influenced:
+            proxy_signal = replace(proxy_signal, decision_influenced=True)
         presentation = build_presentation_context(
             decision=decision,
             basket=market_state.basket,
             technical=market_state.technical,
             portfolio=portfolio_state.to_position(),
             metadata=metadata,
+            proxy_signal=proxy_signal,
         )
 
         if not self.dry_run:
@@ -215,18 +244,21 @@ class AiosRunner:
             )
             if hasattr(provider, "fetch_result"):
                 result = provider.fetch_result(request)
+                prices = self._apply_manual_official_priority(
+                    context,
+                    result.prices,
+                )
                 metadata = self._build_run_metadata(
-                    prices=result.prices,
+                    prices=prices,
                     provider_used=result.provider_mix,
                     required_tickers=context.config.data.required_tickers,
                     fallback_used=result.provider_mix not in {"none", "yfinance"},
                     provider_by_ticker=result.provider_by_ticker,
-                    coverage=result.coverage,
                     manual_metadata=manual_metadata,
                 )
                 logging.info("Provider used: %s", metadata.provider_used)
                 logging.info("Data quality: %s", metadata.data_quality)
-                return result.prices, metadata
+                return prices, metadata
 
         prices = self._fetch_with_retry(
             provider_name=context.config.data.primary_provider,
@@ -271,6 +303,8 @@ class AiosRunner:
                 )
             fallback_used = True
 
+        prices = self._apply_manual_official_priority(context, prices)
+
         metadata = self._build_run_metadata(
             prices=prices,
             provider_used=provider_used,
@@ -281,6 +315,82 @@ class AiosRunner:
         logging.info("Provider used: %s", metadata.provider_used)
         logging.info("Data quality: %s", metadata.data_quality)
         return prices, metadata
+
+    def _fetch_proxy_prices(self, context: RunContext) -> pd.DataFrame:
+        if not context.config.proxy.enabled:
+            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+        symbols = {
+            ticker: symbol
+            for ticker, symbol in context.config.proxy.symbols.items()
+            if str(symbol).strip()
+        }
+        if not symbols:
+            return pd.DataFrame(columns=PROXY_PRICE_COLUMNS)
+        provider = create_tradable_proxy_price_provider(context.config.proxy)
+        request = ProxyPriceRequest(
+            symbols=symbols,
+            provider_priority=context.config.proxy.provider_priority,
+        )
+        return provider.fetch(request)
+
+    @staticmethod
+    def _build_proxy_signal(
+        context: RunContext,
+        proxy_prices: pd.DataFrame,
+        official_basket: BasketSnapshot,
+        manual_tickers: list[str],
+    ) -> ProxySignalSnapshot:
+        return ProxySignalEngine(
+            ai_tickers=list(context.config.baskets.ai),
+            hbm_weights=context.config.baskets.hbm,
+            manual_official_tickers=manual_tickers,
+        ).build(proxy_prices, official_basket=official_basket)
+
+    def _apply_manual_official_priority(
+        self,
+        context: RunContext,
+        prices: pd.DataFrame,
+    ) -> pd.DataFrame:
+        manual_prices = self._manual_official_prices(context)
+        if manual_prices.empty:
+            return prices
+        return self._merge_price_frames(manual_prices, prices)
+
+    def _manual_official_prices(self, context: RunContext) -> pd.DataFrame:
+        manual_path = self._manual_input_path(context)
+        if not manual_path.exists():
+            return pd.DataFrame(columns=PRICE_COLUMNS)
+        try:
+            frame = pd.read_csv(manual_path)
+        except Exception:
+            return pd.DataFrame(columns=PRICE_COLUMNS)
+        required_columns = {"date", "ticker", "close"}
+        if frame.empty or not required_columns.issubset(frame.columns):
+            return pd.DataFrame(columns=PRICE_COLUMNS)
+
+        manual = frame.copy()
+        manual["date"] = pd.to_datetime(
+            manual["date"],
+            errors="coerce",
+        ).dt.date.astype(str)
+        manual["ticker"] = manual["ticker"].astype(str)
+        manual["close"] = pd.to_numeric(manual["close"], errors="coerce")
+        manual = manual.dropna(subset=["date", "ticker", "close"])
+        manual = manual[manual["date"] != "NaT"]
+        if manual.empty:
+            return pd.DataFrame(columns=PRICE_COLUMNS)
+        return pd.DataFrame(
+            {
+                "date": manual["date"],
+                "ticker": manual["ticker"],
+                "open": manual["close"],
+                "high": manual["close"],
+                "low": manual["close"],
+                "close": manual["close"],
+                "adj_close": manual["close"],
+                "volume": 0,
+            }
+        )[PRICE_COLUMNS]
 
     @staticmethod
     def _missing_tickers(prices, required_tickers: list[str]) -> list[str]:
@@ -515,9 +625,29 @@ class AiosRunner:
             len(stored),
         )
 
-    def _build_market_state(self, context: RunContext, prices) -> MarketState:
+    @staticmethod
+    def _store_proxy_prices(context: RunContext, proxy_prices: pd.DataFrame) -> None:
+        if proxy_prices.empty:
+            return
+        stored = upsert_csv(
+            path=context.config.proxy.output_path,
+            frame=proxy_prices[PROXY_PRICE_COLUMNS],
+            key_columns=["date", "ticker", "provider"],
+        )
+        logging.info(
+            "Tradable proxy prices written to %s with %s rows.",
+            context.config.proxy.output_path,
+            len(stored),
+        )
+
+    def _build_market_state(
+        self,
+        context: RunContext,
+        prices,
+        fallback_date: str,
+    ) -> MarketState:
         if prices.empty:
-            raise ValueError("No market data available for orchestration.")
+            return self._empty_market_state(context, fallback_date)
 
         basket_metrics = calculate_basket_metrics(
             prices=prices,
@@ -525,7 +655,7 @@ class AiosRunner:
             hbm_weights=context.config.baskets.hbm,
         )
         if basket_metrics.empty:
-            raise ValueError("Basket metrics are empty.")
+            return self._empty_market_state(context, fallback_date)
 
         technicals = add_technical_indicators(
             prices,
@@ -546,6 +676,24 @@ class AiosRunner:
             basket=BasketSnapshot.from_row(basket_metrics.iloc[-1]),
             technical=TechnicalSnapshot.from_row(ticker_technicals.iloc[-1]),
         )
+
+    @staticmethod
+    def _empty_market_state(context: RunContext, date_value: str) -> MarketState:
+        ticker = next(iter(context.portfolio.positions), None)
+        if ticker is None:
+            ticker = (
+                context.config.data.required_tickers[0]
+                if context.config.data.required_tickers
+                else "N/A"
+            )
+        return MarketState(
+            basket=BasketSnapshot(date=date_value),
+            technical=TechnicalSnapshot(date=date_value, ticker=ticker),
+        )
+
+    @staticmethod
+    def _mask_incomplete_basket_metrics(basket: BasketSnapshot) -> BasketSnapshot:
+        return BasketSnapshot(date=basket.date)
 
     @staticmethod
     def _select_primary_ticker(context: RunContext, technicals) -> str:
@@ -578,3 +726,12 @@ def _default_manual_metadata() -> dict[str, object]:
         "tickers": [],
         "source": "None",
     }
+
+
+def _proxy_latest_date(proxy_prices: pd.DataFrame) -> str | None:
+    if proxy_prices.empty or "date" not in proxy_prices.columns:
+        return None
+    dates = pd.to_datetime(proxy_prices["date"], errors="coerce").dropna()
+    if dates.empty:
+        return None
+    return dates.max().date().isoformat()

@@ -100,7 +100,7 @@ cash:
 
     workbook = load_workbook(output_dir / "investment_dashboard.xlsx")
     assert workbook["Dashboard"]["B4"].value == "csv"
-    assert workbook["Dashboard"]["B14"].value == signal["recommendation"]
+    assert workbook["Dashboard"]["B18"].value == signal["recommendation"]
 
     history = pd.read_csv(output_dir / "history.csv")
     assert set(history["ticker"]) == {"HBM1", "HBM2", "AI1", "AI2"}
@@ -177,6 +177,72 @@ coach:
     assert "Using safe defaults" in (output_dir / "execution.log").read_text(
         encoding="utf-8"
     )
+
+
+def test_main_masks_basket_metrics_when_required_basket_ticker_is_missing(
+    tmp_path: Path,
+) -> None:
+    csv_path = tmp_path / "partial_prices.csv"
+    config_path = tmp_path / "config.yaml"
+    portfolio_path = tmp_path / "portfolio.yaml"
+    output_dir = tmp_path / "reports"
+    start = date(2026, 1, 1)
+    pd.DataFrame(
+        [_row(start, offset, "AI1", 100 + offset) for offset in range(30)]
+    ).to_csv(csv_path, index=False)
+
+    config_path.write_text(
+        f"""
+app:
+  output_dir: {output_dir}
+data:
+  primary_provider: csv
+  csv_path: {csv_path}
+  required_tickers:
+    - AI1
+    - HBM1
+baskets:
+  ai:
+    AI1: 1.0
+  hbm:
+    HBM1: 1.0
+proxy:
+  enabled: false
+coach:
+  interactive_input: false
+""",
+        encoding="utf-8",
+    )
+    portfolio_path.write_text(
+        """
+positions:
+  HBM1:
+    shares: 100
+    average_cost: 10
+""",
+        encoding="utf-8",
+    )
+
+    assert main(
+        [
+            "--config",
+            str(config_path),
+            "--portfolio",
+            str(portfolio_path),
+            "--provider",
+            "csv",
+            "--output-dir",
+            str(output_dir),
+            "--no-input",
+        ]
+    ) == 0
+
+    signal = json.loads((output_dir / "latest_signal.json").read_text())
+    assert signal["recommendation"] == "Uncertain"
+    assert signal["risk_score"] is None
+    assert signal["risk_score_display"] == "N/A"
+    assert signal["relative_ratio_display"] == "N/A"
+    assert signal["missing_tickers"] == ["HBM1"]
 
 
 def test_main_falls_back_to_csv_cache_when_yahoo_returns_empty(

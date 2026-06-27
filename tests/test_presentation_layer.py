@@ -14,6 +14,7 @@ from aios.decision.models import (
     RiskLevel,
     TechnicalSnapshot,
 )
+from aios.proxy.models import PROXY_WARNING, ProxySignalSnapshot
 from aios.reports.models import build_presentation_context, context_to_dict
 from aios.reports.presentation import generate_presentation_outputs
 
@@ -38,6 +39,7 @@ def test_context_to_dict_renders_decision_without_recalculating() -> None:
     assert payload["latest_manual_input_date"] == "N/A"
     assert payload["manual_tickers_used"] == []
     assert payload["manual_source"] == "None"
+    assert payload["proxy_intraday_signal"]["available"] is False
     assert payload["data_warnings"] == []
     assert payload["top_reasons"] == [
         "Market classified as Uptrend.",
@@ -69,11 +71,18 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert "Data Source" in html
     assert "Data Quality" in html
     assert "Manual Mobile Input" in html
+    assert "Proxy Intraday Market Signal" in html
+    assert "Proxy Symbols Used" in html
     assert "@media (max-width: 760px)" in html
     assert "<script" not in html.lower()
 
     workbook = load_workbook(paths.excel_dashboard)
-    assert workbook.sheetnames == ["Dashboard", "Key Indicators", "Reasons"]
+    assert workbook.sheetnames == [
+        "Dashboard",
+        "Key Indicators",
+        "Reasons",
+        "Proxy Signal",
+    ]
 
     dashboard = workbook["Dashboard"]
     assert dashboard["B4"].value == "csv"
@@ -86,12 +95,16 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert dashboard["B11"].value == 100
     assert dashboard["B12"].value == 100.0
     assert dashboard["B13"].value is False
-    assert dashboard["B14"].value == "Hold"
-    assert dashboard["B15"].value == 72
-    assert dashboard["B16"].value == "Low"
-    assert dashboard["B17"].value == "Uptrend"
+    assert dashboard["B14"].value == "No"
+    assert dashboard["B15"].value == "none"
+    assert dashboard["B16"].value == "N/A"
+    assert dashboard["B17"].value == "Missing"
+    assert dashboard["B18"].value == "Hold"
+    assert dashboard["B19"].value == 72
+    assert dashboard["B20"].value == "Low"
+    assert dashboard["B21"].value == "Uptrend"
     assert dashboard.freeze_panes == "A3"
-    assert dashboard.auto_filter.ref == "A3:B24"
+    assert dashboard.auto_filter.ref == "A3:B28"
     assert len(dashboard._charts) == 1
     assert len(list(dashboard.conditional_formatting)) > 0
 
@@ -103,6 +116,34 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
 
     reasons = workbook["Reasons"]
     assert reasons["B2"].value == "Market classified as Uptrend."
+
+    proxy = workbook["Proxy Signal"]
+    assert proxy["A1"].value == "Field"
+    assert proxy["B12"].value == PROXY_WARNING
+
+
+def test_proxy_signal_is_rendered_with_clear_warning() -> None:
+    context = _presentation_context(
+        proxy_signal=ProxySignalSnapshot(
+            available=True,
+            provider_used="fixture",
+            symbols_used={"MU": "MU-PERP"},
+            tickers_covered=["MU"],
+            proxy_ai_1d_change=None,
+            proxy_hbm_1d_change=-5.4,
+            proxy_risk_level="Strong Risk-Off",
+            proxy_data_quality="Partial",
+            decision_influenced=True,
+        )
+    )
+
+    payload = context_to_dict(context)
+
+    assert payload["decision_influenced_by_proxy"] is False
+    assert payload["proxy_intraday_signal"]["available"] is True
+    assert payload["proxy_intraday_signal"]["decision_influenced"] is True
+    assert payload["proxy_intraday_signal"]["warning"] == PROXY_WARNING
+    assert PROXY_WARNING in payload["data_warnings"]
 
 
 def test_data_quality_warnings_are_rendered_for_missing_inputs() -> None:
@@ -132,6 +173,7 @@ def test_data_quality_warnings_are_rendered_for_missing_inputs() -> None:
 def _presentation_context(
     basket: BasketSnapshot | None = None,
     metadata: RunMetadata | None = None,
+    proxy_signal: ProxySignalSnapshot | None = None,
 ):
     decision = DecisionResult(
         date="2026-06-26",
@@ -190,4 +232,5 @@ def _presentation_context(
             data_quality_score=100,
             cache_coverage_percentage=100.0,
         ),
+        proxy_signal=proxy_signal,
     )

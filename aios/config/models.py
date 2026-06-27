@@ -389,6 +389,73 @@ class ReportsConfig:
         )
 
 
+@dataclass(frozen=True)
+class ProxyConfig:
+    enabled: bool = True
+    provider_priority: list[str] = field(
+        default_factory=lambda: ["okx", "binance"]
+    )
+    symbols: dict[str, str] = field(
+        default_factory=lambda: {
+            "NVDA": "",
+            "MU": "",
+            "MSFT": "",
+            "AAPL": "",
+            "TSLA": "",
+        }
+    )
+    allow_proxy_for_intraday_signal: bool = True
+    allow_proxy_for_core_metrics: bool = False
+    max_confidence_when_proxy_only: int = 65
+    max_confidence_when_proxy_conflict: int = 55
+    write_proxy_to_official_cache: bool = False
+    output_path: Path = Path("data/proxy/tradable_proxy_prices.csv")
+    fixture_path: Path | None = None
+
+    @classmethod
+    def from_mapping(cls, data: dict[str, Any]) -> "ProxyConfig":
+        defaults = cls()
+        priority = data.get("provider_priority", defaults.provider_priority)
+        if not isinstance(priority, list):
+            raise ValueError("proxy.provider_priority must be a list")
+
+        symbols = data.get("symbols", defaults.symbols)
+        if not isinstance(symbols, dict):
+            raise ValueError("proxy.symbols must be a mapping")
+
+        fixture_path = data.get("fixture_path")
+        return cls(
+            enabled=_as_bool(data.get("enabled"), defaults.enabled),
+            provider_priority=[str(provider) for provider in priority],
+            symbols={
+                str(ticker): str(symbol or "")
+                for ticker, symbol in symbols.items()
+            },
+            allow_proxy_for_intraday_signal=_as_bool(
+                data.get("allow_proxy_for_intraday_signal"),
+                defaults.allow_proxy_for_intraday_signal,
+            ),
+            allow_proxy_for_core_metrics=_as_bool(
+                data.get("allow_proxy_for_core_metrics"),
+                defaults.allow_proxy_for_core_metrics,
+            ),
+            max_confidence_when_proxy_only=_as_int(
+                data.get("max_confidence_when_proxy_only"),
+                defaults.max_confidence_when_proxy_only,
+            ),
+            max_confidence_when_proxy_conflict=_as_int(
+                data.get("max_confidence_when_proxy_conflict"),
+                defaults.max_confidence_when_proxy_conflict,
+            ),
+            write_proxy_to_official_cache=_as_bool(
+                data.get("write_proxy_to_official_cache"),
+                defaults.write_proxy_to_official_cache,
+            ),
+            output_path=Path(data.get("output_path", defaults.output_path)),
+            fixture_path=Path(fixture_path) if fixture_path else None,
+        )
+
+
 @dataclass
 class AiosConfig:
     app: AppConfig
@@ -401,6 +468,7 @@ class AiosConfig:
     review: ReviewConfig
     coach: CoachConfig
     reports: ReportsConfig
+    proxy: ProxyConfig
 
 
 @dataclass(frozen=True)

@@ -37,6 +37,24 @@ data_quality:
     degraded: 25
     failed: 50
 
+proxy:
+  enabled: true
+  provider_priority:
+    - okx
+    - binance
+  symbols:
+    NVDA: ""
+    MU: ""
+    MSFT: ""
+    AAPL: ""
+    TSLA: ""
+  allow_proxy_for_intraday_signal: true
+  allow_proxy_for_core_metrics: false
+  max_confidence_when_proxy_only: 65
+  max_confidence_when_proxy_conflict: 55
+  write_proxy_to_official_cache: false
+  output_path: data/proxy/tradable_proxy_prices.csv
+
 baskets:
   ai:
     MSFT: 0.1667

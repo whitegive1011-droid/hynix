@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from aios.config.models import DecisionConfig
+from aios.config.models import DecisionConfig, ProxyConfig
 from aios.decision.models import (
     BasketSnapshot,
     DecisionDataQuality,
@@ -21,9 +21,12 @@ class DecisionEngine:
     """Generate today's rule-based recommendation."""
 
     config: DecisionConfig
+    proxy_config: ProxyConfig | None = None
 
     def decide(self, decision_input: DecisionInput) -> DecisionResult:
         if self._requires_uncertain_decision(decision_input.data_quality):
+            if self._can_use_proxy_when_official_incomplete(decision_input):
+                return self._proxy_based_decision(decision_input)
             return self._uncertain_for_data_quality(decision_input)
 
         mode, classification_reasons, triggered_rules = self.classify_market(
@@ -47,11 +50,19 @@ class DecisionEngine:
             self._confidence(mode, risk_level),
             decision_input.data_quality,
         )
+        proxy_reasons, proxy_rules, proxy_influenced = self._official_proxy_context(
+            decision_input,
+        )
+        confidence = self._cap_confidence_for_proxy_conflict(
+            confidence,
+            decision_input,
+        )
 
         reasons = [
             f"Market classified as {mode.value}.",
             *classification_reasons,
             action_reason,
+            *proxy_reasons,
         ]
         if risk_level == RiskLevel.HIGH:
             reasons.append("Risk level is High based on configured risk thresholds.")
@@ -68,7 +79,8 @@ class DecisionEngine:
             current_position=decision_input.position.current_shares,
             suggested_position=suggested_position,
             position_delta=position_delta,
-            triggered_rules=[*triggered_rules, action_rule],
+            triggered_rules=[*triggered_rules, action_rule, *proxy_rules],
+            proxy_influenced=proxy_influenced,
         )
 
     def _requires_uncertain_decision(self, data_quality: DecisionDataQuality) -> bool:
@@ -116,6 +128,90 @@ class DecisionEngine:
                 "data_quality.insufficient",
                 "position.watch_uncertain",
             ],
+        )
+
+    def _can_use_proxy_when_official_incomplete(
+        self,
+        decision_input: DecisionInput,
+    ) -> bool:
+        proxy_config = self._proxy_config()
+        return (
+            proxy_config.allow_proxy_for_intraday_signal
+            and decision_input.proxy_signal.available
+            and decision_input.proxy_signal.proxy_data_quality != "Missing"
+        )
+
+    def _proxy_based_decision(
+        self,
+        decision_input: DecisionInput,
+    ) -> DecisionResult:
+        proxy_config = self._proxy_config()
+        current_position = decision_input.position.current_shares
+        step = self.config.max_single_adjustment_shares
+        proxy_level = decision_input.proxy_signal.proxy_risk_level
+
+        suggested_position = current_position
+        recommendation = "Proxy-Based Watch"
+        risk_level = RiskLevel.LOW
+        action_rule = "position.proxy_watch"
+        if proxy_level == "Strong Risk-Off":
+            risk_level = RiskLevel.HIGH
+            action_rule = "position.proxy_reduce_risk"
+            if current_position > 0:
+                suggested_position = max(0, current_position - step)
+                recommendation = f"Reduce {current_position - suggested_position} Shares"
+            else:
+                recommendation = "Proxy-Based Watch"
+        elif proxy_level == "Risk-Off":
+            risk_level = RiskLevel.MEDIUM
+            recommendation = "Cautious Hold"
+            action_rule = "position.proxy_cautious_hold"
+        elif proxy_level == "Risk-On":
+            recommendation = "Cautious Hold"
+            action_rule = "position.proxy_cautious_hold"
+
+        confidence = min(
+            proxy_config.max_confidence_when_proxy_only,
+            self.config.confidence_by_mode.get(
+                MarketMode.MIXED.value,
+                self.config.base_confidence,
+            )
+            + 20,
+        )
+        reasons = [
+            "Market classified as Mixed.",
+            "Official equity data is incomplete.",
+            "Tradable proxy data is used for intraday risk assessment only.",
+            "Proxy data is not official equity market data.",
+            f"Proxy intraday risk level is {proxy_level}.",
+        ]
+        if decision_input.proxy_signal.proxy_ai_1d_change is not None:
+            reasons.append(
+                "Proxy AI 1D change: "
+                f"{decision_input.proxy_signal.proxy_ai_1d_change:.2f}%."
+            )
+        if decision_input.proxy_signal.proxy_hbm_1d_change is not None:
+            reasons.append(
+                "Proxy HBM 1D change: "
+                f"{decision_input.proxy_signal.proxy_hbm_1d_change:.2f}%."
+            )
+
+        return DecisionResult(
+            date=decision_input.basket.date,
+            market_mode=MarketMode.MIXED,
+            recommendation=recommendation,
+            confidence=int(confidence),
+            reasons=reasons,
+            risk_level=risk_level,
+            current_position=current_position,
+            suggested_position=suggested_position,
+            position_delta=suggested_position - current_position,
+            triggered_rules=[
+                "proxy.official_data_incomplete",
+                "proxy.intraday_signal",
+                action_rule,
+            ],
+            proxy_influenced=True,
         )
 
     def classify_market(
@@ -374,6 +470,48 @@ class DecisionEngine:
             self.config.min_confidence,
             min(self.config.max_confidence, int(confidence)),
         )
+
+    def _official_proxy_context(
+        self,
+        decision_input: DecisionInput,
+    ) -> tuple[list[str], list[str], bool]:
+        proxy = decision_input.proxy_signal
+        if not proxy.available:
+            return [], [], False
+
+        reasons = [
+            f"Proxy intraday risk level is {proxy.proxy_risk_level}.",
+            "Tradable proxy data is supporting context only.",
+            "Proxy data is not official equity market data.",
+        ]
+        rules = ["proxy.supporting_context"]
+        proxy_influenced = False
+        if proxy.proxy_official_conflict_flag:
+            reasons.append(
+                "Proxy signal conflicts with official market data; confidence is capped."
+            )
+            rules.append("proxy.official_conflict")
+            proxy_influenced = True
+        return reasons, rules, proxy_influenced
+
+    def _cap_confidence_for_proxy_conflict(
+        self,
+        confidence: int,
+        decision_input: DecisionInput,
+    ) -> int:
+        if not decision_input.proxy_signal.proxy_official_conflict_flag:
+            return confidence
+        conflict_cap = min(
+            80,
+            self._proxy_config().max_confidence_when_proxy_conflict,
+        )
+        return max(
+            self.config.min_confidence,
+            min(confidence, conflict_cap),
+        )
+
+    def _proxy_config(self) -> ProxyConfig:
+        return self.proxy_config or ProxyConfig()
 
 
 def _value(value: float | None) -> float:
