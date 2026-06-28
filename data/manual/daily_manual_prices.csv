@@ -12,15 +12,17 @@ date,ticker,close,change_pct,market_cap,source,note,input_source,imported_at
 2026-06-27,QQQ,706.52,-1.38,,futu_official,QQQ official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
 2026-06-27,SOXX,589.94,-5.64,,futu_official,SOXX official quote from Futu screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
 2026-06-27,TSLA,380.66,2.53,,futu_official,Futu official quote from screenshot,GitHub Issue,2026-06-27T13:46:30+00:00
-2026-06-28,000660.KS,1768.32,0.63,,manual_official,SKHYNIXUSDT quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,005930.KS,226.96,2.41,,manual_official,SAMSUNGUSDT quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,AAPL,282.28,0.84,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,AMZN,233.71,1.07,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,GOOGL,340.25,-0.43,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,META,554.58,0.03,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,MSFT,376.11,1.58,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,MU,1142.69,-1.28,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,NVDA,193.94,0.36,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,QQQ,704.94,-1.85,,manual_official,Market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,SOXX,589.56,-6.04,,manual_official,Market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
-2026-06-28,TSLA,381.21,0.28,,manual_official,Binance/market quote treated as official USD price by user instruction,GitHub Issue,2026-06-27T15:17:42+00:00
+2026-06-28,000660.KS,1768.32,-0.12,1.24,manual_upload,SK Hynix manual; close in USD/USDT-equivalent; market_cap in trillion USD,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,005930.KS,226.96,0.1,1.45,manual_upload,Samsung manual; close in USD/USDT-equivalent; market_cap in trillion USD,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,7709.HK,157.0,0.0,,manual_upload,HK product manual; keep same unit convention every day,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,7747.HK,176.35,0.0,,manual_upload,HK product manual; keep same unit convention every day,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,AAPL,282.28,0.25,,manual_upload,AAPLUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,AMZN,233.71,0.09,,manual_upload,AMZNUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,GOOGL,340.25,-0.01,,manual_upload,GOOGLUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,META,554.58,0.2,,manual_upload,METAUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,MSFT,376.11,0.13,,manual_upload,MSFTUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,MU,1142.69,-0.07,,manual_upload,MUUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,NVDA,193.94,0.73,,manual_upload,NVDAUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,QQQ,704.94,-0.22,,manual_upload,QQQ manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,SOXX,589.56,-0.06,,manual_upload,SOXX manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
+2026-06-28,TSLA,381.21,0.14,,manual_upload,TSLAUSDT manual; USD/USDT-equivalent,GitHub Issue,2026-06-28T04:31:47+00:00
