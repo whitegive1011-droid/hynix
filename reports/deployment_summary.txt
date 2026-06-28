@@ -1,6 +1,6 @@
 AIOS Deployment Summary
 =======================
-Execution Time: 0.16s
+Execution Time: 0.24s
 Provider Used: csv
 Data Source: Manual Upload Only
 Data Quality: Degraded
@@ -11,5 +11,5 @@ Missing Tickers: None
 Stale Tickers: None
 Cache Coverage: 100.00%
 Recommendation Degraded: True
-Test Result: not_run
+Test Result: passed
 Deployment Status: generated
