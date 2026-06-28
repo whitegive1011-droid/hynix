@@ -18,6 +18,10 @@ PRICE_COLUMNS = [
     "volume",
 ]
 
+OPTIONAL_PRICE_COLUMNS = [
+    "change_pct",
+]
+
 HISTORY_COLUMNS = [
     "run_id",
     "run_timestamp",
@@ -108,6 +112,9 @@ def prepare_history_frame(
     )
     grouped_price = price_for_return.groupby(history["ticker"])
     history["return_1d"] = grouped_price.pct_change(1) * 100
+    if "change_pct" in history.columns:
+        manual_change_pct = pd.to_numeric(history["change_pct"], errors="coerce")
+        history["return_1d"] = manual_change_pct.combine_first(history["return_1d"])
     history["return_5d"] = grouped_price.pct_change(5) * 100
     history["return_20d"] = grouped_price.pct_change(20) * 100
 

@@ -40,6 +40,7 @@ def calculate_basket_metrics(
     indexed_prices = _indexed_price_pivot(prices)
     ai_basket = _equal_weight_basket(indexed_prices, ai_tickers)
     hbm_basket = _weighted_basket(indexed_prices, hbm_weights)
+    daily_change_pct = _daily_change_pct_pivot(prices).reindex(indexed_prices.index)
 
     metrics = pd.DataFrame(
         {
@@ -55,6 +56,20 @@ def calculate_basket_metrics(
         )
         metrics[f"HBM_{horizon}D"] = (
             metrics["HBM_Basket"].pct_change(horizon, fill_method=None) * 100
+        )
+
+    if not daily_change_pct.empty:
+        ai_1d_override = _equal_weight_basket(daily_change_pct, ai_tickers)
+        hbm_1d_override = _weighted_basket(daily_change_pct, hbm_weights)
+        metrics["AI_1D"] = _override_by_date(
+            metrics,
+            "AI_1D",
+            ai_1d_override,
+        )
+        metrics["HBM_1D"] = _override_by_date(
+            metrics,
+            "HBM_1D",
+            hbm_1d_override,
         )
 
     metrics["D1"] = metrics["HBM_1D"] - metrics["AI_1D"]
@@ -93,7 +108,68 @@ def _indexed_price_pivot(prices: pd.DataFrame) -> pd.DataFrame:
         .sort_index()
         .astype(float)
     )
-    return pivot.divide(pivot.apply(lambda series: series.dropna().iloc[0]), axis=1) * 100
+    indexed = (
+        pivot.divide(pivot.apply(lambda series: series.dropna().iloc[0]), axis=1) * 100
+    )
+    return _apply_manual_change_pct_index(indexed, frame)
+
+
+def _apply_manual_change_pct_index(
+    indexed_prices: pd.DataFrame,
+    prices: pd.DataFrame,
+) -> pd.DataFrame:
+    daily_change_pct = _daily_change_pct_pivot(prices).reindex(indexed_prices.index)
+    if daily_change_pct.empty:
+        return indexed_prices
+
+    adjusted = indexed_prices.copy()
+    for ticker in adjusted.columns:
+        if ticker not in daily_change_pct.columns:
+            continue
+        ticker_changes = daily_change_pct[ticker]
+        ticker_index = adjusted[ticker].copy()
+        for position in range(1, len(ticker_index)):
+            if pd.isna(ticker_index.iloc[position - 1]):
+                continue
+            change_pct = ticker_changes.iloc[position]
+            if pd.notna(change_pct):
+                ticker_index.iloc[position] = ticker_index.iloc[position - 1] * (
+                    1 + (change_pct / 100)
+                )
+        adjusted[ticker] = ticker_index
+    return adjusted
+
+
+def _daily_change_pct_pivot(prices: pd.DataFrame) -> pd.DataFrame:
+    if "change_pct" not in prices.columns:
+        return pd.DataFrame()
+
+    frame = prices.copy()
+    frame["date"] = pd.to_datetime(frame["date"])
+    frame["ticker"] = frame["ticker"].astype(str)
+    frame["change_pct"] = pd.to_numeric(frame["change_pct"], errors="coerce")
+    if frame["change_pct"].isna().all():
+        return pd.DataFrame()
+
+    return (
+        frame.pivot_table(
+            index="date",
+            columns="ticker",
+            values="change_pct",
+            aggfunc="last",
+        )
+        .sort_index()
+        .astype(float)
+    )
+
+
+def _override_by_date(
+    metrics: pd.DataFrame,
+    column: str,
+    override: pd.Series,
+) -> pd.Series:
+    override_values = pd.to_datetime(metrics["date"]).map(override)
+    return override_values.combine_first(metrics[column])
 
 
 def _equal_weight_basket(indexed_prices: pd.DataFrame, tickers: list[str]) -> pd.Series:

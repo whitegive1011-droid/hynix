@@ -7,7 +7,7 @@ from pathlib import Path
 from aios.config.loader import load_config
 import pandas as pd
 
-from aios.data.models import MarketDataRequest, PRICE_COLUMNS
+from aios.data.models import MarketDataRequest, OPTIONAL_PRICE_COLUMNS, PRICE_COLUMNS
 from aios.data.providers import create_market_data_provider
 from aios.data.quality import build_cache_coverage_report
 from aios.storage.csv_store import upsert_csv
@@ -191,7 +191,15 @@ def _read_manual_prices(input_path: Path) -> pd.DataFrame:
         prices["volume"] = 0
     prices["volume"] = pd.to_numeric(prices["volume"], errors="coerce").fillna(0)
 
-    prices = prices[PRICE_COLUMNS].drop_duplicates(
+    for column in OPTIONAL_PRICE_COLUMNS:
+        if column in prices.columns:
+            prices[column] = pd.to_numeric(prices[column], errors="coerce")
+
+    columns = [
+        *PRICE_COLUMNS,
+        *[column for column in OPTIONAL_PRICE_COLUMNS if column in prices.columns],
+    ]
+    prices = prices[columns].drop_duplicates(
         subset=["date", "ticker"],
         keep="last",
     )

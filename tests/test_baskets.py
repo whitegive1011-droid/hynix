@@ -81,6 +81,51 @@ def test_risk_score_is_nan_when_forward_inputs_are_missing() -> None:
     assert pd.isna(latest["Risk_Score"])
 
 
+def test_one_day_returns_use_manual_change_pct_when_price_units_change() -> None:
+    prices = pd.DataFrame(
+        [
+            _row(date(2026, 6, 27), 0, "000660.KS", 2673000.0),
+            _row(date(2026, 6, 27), 0, "005930.KS", 226.7),
+            _row(date(2026, 6, 27), 0, "MU", 1143.47),
+            _row(date(2026, 6, 27), 0, "MSFT", 375.61),
+            _row(date(2026, 6, 27), 0, "GOOGL", 340.28),
+            _row(date(2026, 6, 27), 0, "AMZN", 233.49),
+            _row(date(2026, 6, 27), 0, "AAPL", 281.57),
+            _row(date(2026, 6, 27), 0, "TSLA", 380.66),
+            _row(date(2026, 6, 28), 0, "000660.KS", 1768.32, 0.63),
+            _row(date(2026, 6, 28), 0, "005930.KS", 226.96, 2.41),
+            _row(date(2026, 6, 28), 0, "MU", 1142.69, -1.28),
+            _row(date(2026, 6, 28), 0, "MSFT", 376.11, 1.58),
+            _row(date(2026, 6, 28), 0, "GOOGL", 340.25, -0.43),
+            _row(date(2026, 6, 28), 0, "AMZN", 233.71, 1.07),
+            _row(date(2026, 6, 28), 0, "META", 554.58, 0.03),
+            _row(date(2026, 6, 28), 0, "AAPL", 282.28, 0.84),
+            _row(date(2026, 6, 28), 0, "TSLA", 381.21, 0.28),
+        ]
+    )
+
+    metrics = calculate_basket_metrics(
+        prices,
+        ai_tickers=["MSFT", "GOOGL", "AMZN", "META", "AAPL", "TSLA"],
+        hbm_weights={"000660.KS": 0.5, "MU": 0.25, "005930.KS": 0.25},
+    )
+
+    latest = metrics.iloc[-1]
+    ai_1d = (1.58 - 0.43 + 1.07 + 0.03 + 0.84 + 0.28) / 6
+    hbm_1d = (0.63 * 0.5) + (-1.28 * 0.25) + (2.41 * 0.25)
+    ai_basket = (101.58 + 99.57 + 101.07 + 100.0 + 100.84 + 100.28) / 6
+    hbm_basket = (100.63 * 0.5) + (98.72 * 0.25) + (102.41 * 0.25)
+
+    assert latest["AI_Basket"] == pytest.approx(ai_basket)
+    assert latest["HBM_Basket"] == pytest.approx(hbm_basket)
+    assert latest["AI_1D"] == pytest.approx(ai_1d)
+    assert latest["HBM_1D"] == pytest.approx(hbm_1d)
+    assert latest["D1"] == pytest.approx(hbm_1d - ai_1d)
+    assert latest["Relative_Ratio"] == pytest.approx(hbm_basket / ai_basket)
+    assert latest["HBM_1D"] > -1.0
+    assert latest["HBM_Basket"] > 99.0
+
+
 def _write_basket_fixture(tmp_path: Path) -> Path:
     start = date(2026, 1, 1)
     rows = []
@@ -99,7 +144,13 @@ def _write_basket_fixture(tmp_path: Path) -> Path:
     return csv_path
 
 
-def _row(start: date, offset: int, ticker: str, close: float) -> dict[str, object]:
+def _row(
+    start: date,
+    offset: int,
+    ticker: str,
+    close: float,
+    change_pct: float | None = None,
+) -> dict[str, object]:
     return {
         "date": start + timedelta(days=offset),
         "ticker": ticker,
@@ -109,4 +160,5 @@ def _row(start: date, offset: int, ticker: str, close: float) -> dict[str, objec
         "close": close,
         "adj_close": close,
         "volume": 1000 + offset,
+        "change_pct": change_pct,
     }

@@ -14,7 +14,12 @@ import urllib.request
 
 import pandas as pd
 
-from aios.data.models import MarketDataRequest, MarketDataResult, PRICE_COLUMNS
+from aios.data.models import (
+    MarketDataRequest,
+    MarketDataResult,
+    OPTIONAL_PRICE_COLUMNS,
+    PRICE_COLUMNS,
+)
 from aios.data.quality import build_cache_coverage_report
 
 
@@ -247,7 +252,11 @@ class CsvMarketDataProvider:
                 f"CSV market data missing columns: {missing_columns}"
             )
 
-        frame = frame[PRICE_COLUMNS].copy()
+        columns = [
+            *PRICE_COLUMNS,
+            *[col for col in OPTIONAL_PRICE_COLUMNS if col in frame.columns],
+        ]
+        frame = frame[columns].copy()
         frame["ticker"] = frame["ticker"].astype(str)
         if request.tickers:
             frame = frame[frame["ticker"].isin(request.tickers)]
@@ -275,7 +284,9 @@ class MultiSourceMarketDataProvider:
         return result.prices
 
     def fetch_result(self, request: MarketDataRequest) -> MarketDataResult:
-        combined = pd.DataFrame(columns=[*PRICE_COLUMNS, "_source", "_priority"])
+        combined = pd.DataFrame(
+            columns=[*PRICE_COLUMNS, *OPTIONAL_PRICE_COLUMNS, "_source", "_priority"]
+        )
         used_sources: list[str] = []
 
         for priority, provider in enumerate(self.providers):
@@ -306,7 +317,7 @@ class MultiSourceMarketDataProvider:
                 used_sources.append(provider.source_name)
 
         prices = (
-            combined[PRICE_COLUMNS].copy()
+            combined[_available_price_columns(combined)].copy()
             if not combined.empty
             else pd.DataFrame(columns=PRICE_COLUMNS)
         )
@@ -491,12 +502,19 @@ def _with_source_columns(
     source: str,
     priority: int,
 ) -> pd.DataFrame:
-    sourced = frame[PRICE_COLUMNS].copy()
+    sourced = frame[_available_price_columns(frame)].copy()
     sourced["ticker"] = sourced["ticker"].astype(str)
     sourced["date"] = pd.to_datetime(sourced["date"]).dt.date.astype(str)
     sourced["_source"] = source
     sourced["_priority"] = priority
     return sourced
+
+
+def _available_price_columns(frame: pd.DataFrame) -> list[str]:
+    return [
+        *PRICE_COLUMNS,
+        *[column for column in OPTIONAL_PRICE_COLUMNS if column in frame.columns],
+    ]
 
 
 def _merge_sourced_frames(

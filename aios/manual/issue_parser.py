@@ -10,7 +10,7 @@ import re
 
 import pandas as pd
 
-from aios.data.models import PRICE_COLUMNS
+from aios.data.models import OPTIONAL_PRICE_COLUMNS, PRICE_COLUMNS
 
 
 ISSUE_PRICE_COLUMNS = [
@@ -143,7 +143,7 @@ def manual_issue_rows_to_cache_frame(rows: pd.DataFrame) -> pd.DataFrame:
     """Convert normalized issue rows into OHLCV cache rows."""
 
     if rows.empty:
-        return pd.DataFrame(columns=PRICE_COLUMNS)
+        return pd.DataFrame(columns=[*PRICE_COLUMNS, *OPTIONAL_PRICE_COLUMNS])
 
     prices = pd.DataFrame(
         {
@@ -155,9 +155,11 @@ def manual_issue_rows_to_cache_frame(rows: pd.DataFrame) -> pd.DataFrame:
             "close": rows["close"].astype(float),
             "adj_close": rows["close"].astype(float),
             "volume": 0,
+            "change_pct": rows["change_pct"],
         }
     )
-    return prices[PRICE_COLUMNS].drop_duplicates(
+    prices["change_pct"] = pd.to_numeric(prices["change_pct"], errors="coerce")
+    return prices[[*PRICE_COLUMNS, *OPTIONAL_PRICE_COLUMNS]].drop_duplicates(
         subset=["date", "ticker"],
         keep="last",
     )

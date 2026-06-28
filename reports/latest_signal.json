@@ -16,13 +16,13 @@
     "data_quality.insufficient",
     "position.watch_uncertain"
   ],
-  "relative_ratio": 0.4999343919862067,
+  "relative_ratio": 0.9984765234765233,
   "samsung_hynix_market_cap_ratio": 1.1693548387096775,
   "samsung_market_cap": 1.45,
   "sk_hynix_market_cap": 1.24,
   "market_cap_ratio_date": "2026-06-28",
   "risk_score": null,
-  "relative_ratio_display": "0.500",
+  "relative_ratio_display": "0.998",
   "samsung_hynix_market_cap_ratio_display": "1.169",
   "risk_score_display": "N/A",
   "data_source": "Manual Upload Only",
@@ -128,8 +128,8 @@
   "key_indicators": [
     {
       "label": "Relative Ratio",
-      "value": 0.4999343919862067,
-      "display_value": "0.500"
+      "value": 0.9984765234765233,
+      "display_value": "0.998"
     },
     {
       "label": "Samsung / SK Hynix Market Cap Ratio",
@@ -143,18 +143,18 @@
     },
     {
       "label": "AI 1D Return",
-      "value": 0.10252773607974941,
+      "value": 0.13333333333333333,
       "display_value": "0.1%"
     },
     {
       "label": "HBM 1D Return",
-      "value": -49.95530365998058,
-      "display_value": "-50.0%"
+      "value": -0.0525,
+      "display_value": "-0.1%"
     },
     {
       "label": "D1",
-      "value": -50.05783139606033,
-      "display_value": "-50.1%"
+      "value": -0.18583333333333332,
+      "display_value": "-0.2%"
     },
     {
       "label": "AI 5D Return",
