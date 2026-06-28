@@ -289,12 +289,14 @@ class AiosRunner:
             ]
             if sources:
                 source = "+".join(sorted(set(sources)))
+        market_cap_snapshot = _samsung_hynix_market_cap_snapshot(normalized)
 
         return {
             "used": True,
             "latest_date": latest_date,
             "tickers": tickers,
             "source": source,
+            **market_cap_snapshot,
         }
 
     @staticmethod
@@ -364,6 +366,14 @@ class AiosRunner:
                 history_depth_by_ticker=history_depth,
                 five_day_readiness=five_day_readiness,
                 twenty_day_readiness=twenty_day_readiness,
+                samsung_hynix_market_cap_ratio=manual_metadata.get(
+                    "samsung_hynix_market_cap_ratio"
+                ),
+                samsung_market_cap=manual_metadata.get("samsung_market_cap"),
+                sk_hynix_market_cap=manual_metadata.get("sk_hynix_market_cap"),
+                market_cap_ratio_date=str(
+                    manual_metadata.get("market_cap_ratio_date", "N/A")
+                ),
             )
 
         last_update = (
@@ -409,6 +419,14 @@ class AiosRunner:
             history_depth_by_ticker=history_depth,
             five_day_readiness=five_day_readiness,
             twenty_day_readiness=twenty_day_readiness,
+            samsung_hynix_market_cap_ratio=manual_metadata.get(
+                "samsung_hynix_market_cap_ratio"
+            ),
+            samsung_market_cap=manual_metadata.get("samsung_market_cap"),
+            sk_hynix_market_cap=manual_metadata.get("sk_hynix_market_cap"),
+            market_cap_ratio_date=str(
+                manual_metadata.get("market_cap_ratio_date", "N/A")
+            ),
         )
 
     @staticmethod
@@ -534,6 +552,7 @@ def _default_manual_metadata() -> dict[str, object]:
         "latest_date": "N/A",
         "tickers": [],
         "source": "None",
+        **_empty_market_cap_snapshot(),
     }
 
 
@@ -543,3 +562,57 @@ def _manual_upload_rows(frame: pd.DataFrame) -> pd.DataFrame:
     if frame.empty:
         return frame.copy()
     return frame.copy()
+
+
+def _empty_market_cap_snapshot() -> dict[str, object]:
+    return {
+        "samsung_hynix_market_cap_ratio": None,
+        "samsung_market_cap": None,
+        "sk_hynix_market_cap": None,
+        "market_cap_ratio_date": "N/A",
+    }
+
+
+def _samsung_hynix_market_cap_snapshot(frame: pd.DataFrame) -> dict[str, object]:
+    """Return latest Samsung/SK Hynix market-cap ratio from manual input rows."""
+
+    if frame.empty or not {"date", "ticker", "market_cap"} <= set(frame.columns):
+        return _empty_market_cap_snapshot()
+
+    normalized = frame.copy()
+    normalized["date"] = pd.to_datetime(normalized["date"], errors="coerce")
+    normalized["ticker"] = normalized["ticker"].astype(str).str.upper()
+    normalized["market_cap"] = pd.to_numeric(
+        normalized["market_cap"],
+        errors="coerce",
+    )
+    normalized = normalized[
+        normalized["ticker"].isin(["005930.KS", "000660.KS"])
+        & normalized["date"].notna()
+        & normalized["market_cap"].notna()
+    ]
+    if normalized.empty:
+        return _empty_market_cap_snapshot()
+
+    for date_value in sorted(normalized["date"].dt.date.unique(), reverse=True):
+        daily = normalized[normalized["date"].dt.date == date_value]
+        daily = daily.drop_duplicates(subset=["ticker"], keep="last")
+        samsung = _market_cap_for_ticker(daily, "005930.KS")
+        sk_hynix = _market_cap_for_ticker(daily, "000660.KS")
+        if samsung is not None and sk_hynix is not None and sk_hynix > 0:
+            return {
+                "samsung_hynix_market_cap_ratio": samsung / sk_hynix,
+                "samsung_market_cap": samsung,
+                "sk_hynix_market_cap": sk_hynix,
+                "market_cap_ratio_date": date_value.isoformat(),
+            }
+
+    return _empty_market_cap_snapshot()
+
+
+def _market_cap_for_ticker(frame: pd.DataFrame, ticker: str) -> float | None:
+    values = frame.loc[frame["ticker"] == ticker, "market_cap"]
+    if values.empty:
+        return None
+    value = float(values.iloc[-1])
+    return value if value > 0 else None

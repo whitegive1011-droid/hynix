@@ -129,7 +129,9 @@ def test_import_issue_command_regenerates_reports_with_manual_only_metadata(
         _issue_body(
             "date,ticker,close,change_pct,market_cap,source,note\n"
             "2026-01-26,AI1,333.00,1.2,,manual,AI latest\n"
-            "2026-01-26,HBM1,444.00,2.4,,manual,HBM latest",
+            "2026-01-26,HBM1,444.00,2.4,,manual,HBM latest\n"
+            "2026-01-26,000660.KS,1768.32,-0.1,300,manual,SK Hynix cap\n"
+            "2026-01-26,005930.KS,226.96,0.1,630,manual,Samsung cap",
             trading_date="2026-01-26",
         ),
         encoding="utf-8",
@@ -159,7 +161,15 @@ def test_import_issue_command_regenerates_reports_with_manual_only_metadata(
     assert signal["manual_mobile_input_used"] is True
     assert signal["latest_manual_input_date"] == "2026-01-26"
     assert signal["manual_source"] == "manual_upload"
-    assert signal["manual_tickers_used"] == ["AI1", "HBM1"]
+    assert signal["manual_tickers_used"] == [
+        "000660.KS",
+        "005930.KS",
+        "AI1",
+        "HBM1",
+    ]
+    assert signal["samsung_hynix_market_cap_ratio"] == 2.1
+    assert signal["samsung_hynix_market_cap_ratio_display"] == "2.100"
+    assert signal["market_cap_ratio_date"] == "2026-01-26"
     assert signal["provider_by_ticker"]["AI1"] == "manual_upload"
     assert "proxy_intraday_signal" not in signal
     assert (paths["reports"] / "dashboard.html").exists()

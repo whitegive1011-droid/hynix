@@ -15,13 +15,14 @@ body:
     id: price_csv
     attributes:
       label: Price CSV
-      description: "Paste the CSV header and one row per ticker. Any source value is accepted and normalized to manual_upload. Examples: futu, binance, okx, futu_official, binance_proxy."
+      description: "Paste the CSV header and one row per ticker. Any source value is accepted and normalized to manual_upload. market_cap is optional, but Samsung/SK Hynix ratio requires 005930.KS and 000660.KS market_cap in the same unit."
       render: csv
       value: |
         date,ticker,close,change_pct,market_cap,source,note
         2026-06-27,AAPL,281.38,1.88,,binance,"AAPLUSDT manual price"
         2026-06-27,MSFT,374.68,4.99,,futu,"Manual price"
-        2026-06-27,000660.KS,1762.51,-0.12,,okx,"SK Hynix manual price"
+        2026-06-27,000660.KS,1762.51,-0.12,300,okx,"SK Hynix manual price; market_cap same unit as Samsung"
+        2026-06-27,005930.KS,226.96,0.10,630,okx,"Samsung manual price; market_cap same unit as SK Hynix"
         2026-06-27,MU,1138.19,-1.55,,binance_proxy,"Accepted as manual upload"
     validations:
       required: true

@@ -17,8 +17,13 @@
     "position.watch_uncertain"
   ],
   "relative_ratio": 0.4999343919862067,
+  "samsung_hynix_market_cap_ratio": null,
+  "samsung_market_cap": null,
+  "sk_hynix_market_cap": null,
+  "market_cap_ratio_date": "N/A",
   "risk_score": null,
   "relative_ratio_display": "0.500",
+  "samsung_hynix_market_cap_ratio_display": "N/A",
   "risk_score_display": "N/A",
   "data_source": "Manual Upload Only",
   "provider_used": "csv",
@@ -114,9 +119,10 @@
   "data_warnings": [
     "Recommendation is degraded because data quality is below the target.",
     "Manual upload data was used from manual_upload on 2026-06-28.",
+    "Samsung / SK Hynix market cap ratio is unavailable; upload market_cap for both 005930.KS and 000660.KS in the same unit.",
     "5D readiness is incomplete for 7747.HK, 000660.KS, 005930.KS, MU, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX; at least 6 trading days are required.",
     "20D readiness is incomplete for 7709.HK, 7747.HK, 000660.KS, 005930.KS, MU, NVDA, MSFT, GOOGL, AMZN, META, AAPL, TSLA, QQQ, SOXX; at least 21 trading days are required.",
-    "Unavailable indicators due to insufficient source data: Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
+    "Unavailable indicators due to insufficient source data: Samsung / SK Hynix Market Cap Ratio, Risk Score, AI 5D Return, HBM 5D Return, D5, D20"
   ],
   "key_indicators": [
     {
@@ -125,9 +131,29 @@
       "display_value": "0.500"
     },
     {
+      "label": "Samsung / SK Hynix Market Cap Ratio",
+      "value": null,
+      "display_value": "N/A"
+    },
+    {
       "label": "Risk Score",
       "value": null,
       "display_value": "N/A"
+    },
+    {
+      "label": "AI 1D Return",
+      "value": 0.10252773607974941,
+      "display_value": "0.1%"
+    },
+    {
+      "label": "HBM 1D Return",
+      "value": -49.95530365998058,
+      "display_value": "-50.0%"
+    },
+    {
+      "label": "D1",
+      "value": -50.05783139606033,
+      "display_value": "-50.1%"
     },
     {
       "label": "AI 5D Return",
@@ -161,7 +187,7 @@
     },
     {
       "label": "MACD",
-      "value": 12.097775751361457,
+      "value": 12.097775751361464,
       "display_value": "12.10"
     }
   ],

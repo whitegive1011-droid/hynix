@@ -29,21 +29,27 @@ def test_calculate_basket_metrics_from_csv_fixture(tmp_path: Path) -> None:
     latest = metrics.iloc[-1]
     ai_latest = 124.0
     hbm_latest = (172.0 + 124.0) / 2
+    hbm_previous = (169.0 + 123.0) / 2
+    ai_1d = (124.0 / 123.0 - 1) * 100
+    hbm_1d = (hbm_latest / hbm_previous - 1) * 100
     ai_5d = (124.0 / 119.0 - 1) * 100
     hbm_5d = (hbm_latest / ((157.0 + 119.0) / 2) - 1) * 100
     ai_20d = (124.0 / 104.0 - 1) * 100
     hbm_20d = (hbm_latest / ((112.0 + 104.0) / 2) - 1) * 100
+    d1 = hbm_1d - ai_1d
     d5 = hbm_5d - ai_5d
     d20 = hbm_20d - ai_20d
     risk_score = max(0.0, -ai_5d) + max(0.0, hbm_5d) + max(0.0, d5 - 10.0)
 
     assert latest["AI_Basket"] == pytest.approx(ai_latest)
     assert latest["HBM_Basket"] == pytest.approx(hbm_latest)
-    assert latest["AI_1D"] == pytest.approx((124.0 / 123.0 - 1) * 100)
+    assert latest["AI_1D"] == pytest.approx(ai_1d)
+    assert latest["HBM_1D"] == pytest.approx(hbm_1d)
     assert latest["AI_5D"] == pytest.approx(ai_5d)
     assert latest["AI_20D"] == pytest.approx(ai_20d)
     assert latest["HBM_5D"] == pytest.approx(hbm_5d)
     assert latest["HBM_20D"] == pytest.approx(hbm_20d)
+    assert latest["D1"] == pytest.approx(d1)
     assert latest["D5"] == pytest.approx(d5)
     assert latest["D20"] == pytest.approx(d20)
     assert latest["Relative_Ratio"] == pytest.approx(hbm_latest / ai_latest)

@@ -52,3 +52,7 @@ class RunMetadata:
     history_depth_by_ticker: dict[str, int] = field(default_factory=dict)
     five_day_readiness: dict[str, bool] = field(default_factory=dict)
     twenty_day_readiness: dict[str, bool] = field(default_factory=dict)
+    samsung_hynix_market_cap_ratio: float | None = None
+    samsung_market_cap: float | None = None
+    sk_hynix_market_cap: float | None = None
+    market_cap_ratio_date: str = "N/A"

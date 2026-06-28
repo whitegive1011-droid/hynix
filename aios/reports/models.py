@@ -76,7 +76,15 @@ def build_presentation_context(
     )
     key_indicators = [
         _indicator("Relative Ratio", basket.relative_ratio, precision=3),
+        _indicator(
+            "Samsung / SK Hynix Market Cap Ratio",
+            metadata.samsung_hynix_market_cap_ratio,
+            precision=3,
+        ),
         _indicator("Risk Score", basket.risk_score, precision=1),
+        _indicator("AI 1D Return", basket.ai_1d, suffix="%", precision=1),
+        _indicator("HBM 1D Return", basket.hbm_1d, suffix="%", precision=1),
+        _indicator("D1", basket.d1, suffix="%", precision=1),
         _indicator("AI 5D Return", basket.ai_5d, suffix="%", precision=1),
         _indicator("HBM 5D Return", basket.hbm_5d, suffix="%", precision=1),
         _indicator("D5", basket.d5, suffix="%", precision=1),
@@ -111,8 +119,18 @@ def context_to_dict(context: PresentationContext) -> dict[str, Any]:
         "top_reasons": context.top_reasons,
         "triggered_rules": decision.triggered_rules,
         "relative_ratio": context.basket.relative_ratio,
+        "samsung_hynix_market_cap_ratio": (
+            context.metadata.samsung_hynix_market_cap_ratio
+        ),
+        "samsung_market_cap": context.metadata.samsung_market_cap,
+        "sk_hynix_market_cap": context.metadata.sk_hynix_market_cap,
+        "market_cap_ratio_date": context.metadata.market_cap_ratio_date,
         "risk_score": context.basket.risk_score,
         "relative_ratio_display": _indicator_display(context, "Relative Ratio"),
+        "samsung_hynix_market_cap_ratio_display": _indicator_display(
+            context,
+            "Samsung / SK Hynix Market Cap Ratio",
+        ),
         "risk_score_display": _indicator_display(context, "Risk Score"),
         "data_source": context.metadata.data_source,
         "provider_used": context.metadata.provider_used,
@@ -199,6 +217,11 @@ def _build_data_warnings(context: PresentationContext) -> list[str]:
             "Manual upload data was used from "
             f"{context.metadata.manual_source} on "
             f"{context.metadata.latest_manual_input_date}."
+        )
+    if context.metadata.samsung_hynix_market_cap_ratio is None:
+        warnings.append(
+            "Samsung / SK Hynix market cap ratio is unavailable; upload "
+            "market_cap for both 005930.KS and 000660.KS in the same unit."
         )
     five_day_missing = [
         ticker

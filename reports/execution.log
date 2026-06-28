@@ -1961,23 +1961,63 @@
 2026-06-27 17:55:27,174 INFO root Market mode: Mixed
 2026-06-27 17:55:27,174 INFO root Confidence: 38
 2026-06-27 17:55:27,174 INFO root AIOS run completed.
-2026-06-28 02:58:21,533 INFO root AIOS run started.
-2026-06-28 02:58:21,533 INFO root Config loaded from config.yaml
-2026-06-28 02:58:21,533 INFO root Portfolio loaded from portfolio.yaml
-2026-06-28 02:58:21,533 INFO root Output directory: reports
-2026-06-28 02:58:21,533 INFO root Run mode: daily
-2026-06-28 02:58:21,533 INFO root Interactive input: False
-2026-06-28 02:58:21,534 INFO root Required tickers configured: 14
-2026-06-28 02:58:21,534 INFO root Portfolio positions configured: 2
-2026-06-28 02:58:21,539 INFO root Manual-only mode: reading market data from CSV cache data/cache/market_cache.csv.
-2026-06-28 02:58:21,550 INFO root Provider used: csv
-2026-06-28 02:58:21,550 INFO root Data quality: Degraded
-2026-06-28 02:58:21,560 INFO root Market history written to reports/history.csv with 36 rows.
-2026-06-28 02:58:21,737 INFO root Latest signal written to reports/latest_signal.json
-2026-06-28 02:58:21,737 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
-2026-06-28 02:58:21,737 INFO root HTML dashboard written to reports/dashboard.html
-2026-06-28 02:58:21,737 INFO root Deployment summary written to reports/deployment_summary.txt
-2026-06-28 02:58:21,737 INFO root Recommendation: Uncertain
-2026-06-28 02:58:21,737 INFO root Market mode: Mixed
-2026-06-28 02:58:21,737 INFO root Confidence: 38
-2026-06-28 02:58:21,737 INFO root AIOS run completed.
+2026-06-28 11:06:46,902 INFO root AIOS run started.
+2026-06-28 11:06:46,903 INFO root Config loaded from config.yaml
+2026-06-28 11:06:46,903 INFO root Portfolio loaded from portfolio.yaml
+2026-06-28 11:06:46,903 INFO root Output directory: reports
+2026-06-28 11:06:46,903 INFO root Run mode: daily
+2026-06-28 11:06:46,903 INFO root Interactive input: False
+2026-06-28 11:06:46,903 INFO root Required tickers configured: 14
+2026-06-28 11:06:46,903 INFO root Portfolio positions configured: 2
+2026-06-28 11:06:46,907 INFO root Manual-only mode: reading market data from CSV cache data/cache/market_cache.csv.
+2026-06-28 11:06:46,913 INFO root Provider used: csv
+2026-06-28 11:06:46,913 INFO root Data quality: Degraded
+2026-06-28 11:06:46,921 INFO root Market history written to reports/history.csv with 36 rows.
+2026-06-28 11:06:47,033 INFO root Latest signal written to reports/latest_signal.json
+2026-06-28 11:06:47,033 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-28 11:06:47,033 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-28 11:06:47,033 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-28 11:06:47,033 INFO root Recommendation: Uncertain
+2026-06-28 11:06:47,033 INFO root Market mode: Mixed
+2026-06-28 11:06:47,033 INFO root Confidence: 38
+2026-06-28 11:06:47,033 INFO root AIOS run completed.
+2026-06-28 11:12:53,289 INFO root AIOS run started.
+2026-06-28 11:12:53,289 INFO root Config loaded from config.yaml
+2026-06-28 11:12:53,290 INFO root Portfolio loaded from portfolio.yaml
+2026-06-28 11:12:53,290 INFO root Output directory: reports
+2026-06-28 11:12:53,290 INFO root Run mode: daily
+2026-06-28 11:12:53,290 INFO root Interactive input: False
+2026-06-28 11:12:53,290 INFO root Required tickers configured: 14
+2026-06-28 11:12:53,290 INFO root Portfolio positions configured: 2
+2026-06-28 11:12:53,303 INFO root Manual-only mode: reading market data from CSV cache data/cache/market_cache.csv.
+2026-06-28 11:12:53,311 INFO root Provider used: csv
+2026-06-28 11:12:53,311 INFO root Data quality: Degraded
+2026-06-28 11:12:53,322 INFO root Market history written to reports/history.csv with 36 rows.
+2026-06-28 11:12:53,435 INFO root Latest signal written to reports/latest_signal.json
+2026-06-28 11:12:53,435 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-28 11:12:53,435 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-28 11:12:53,435 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-28 11:12:53,435 INFO root Recommendation: Uncertain
+2026-06-28 11:12:53,435 INFO root Market mode: Mixed
+2026-06-28 11:12:53,436 INFO root Confidence: 38
+2026-06-28 11:12:53,436 INFO root AIOS run completed.
+2026-06-28 11:16:14,460 INFO root AIOS run started.
+2026-06-28 11:16:14,460 INFO root Config loaded from config.yaml
+2026-06-28 11:16:14,460 INFO root Portfolio loaded from portfolio.yaml
+2026-06-28 11:16:14,460 INFO root Output directory: reports
+2026-06-28 11:16:14,460 INFO root Run mode: daily
+2026-06-28 11:16:14,460 INFO root Interactive input: False
+2026-06-28 11:16:14,460 INFO root Required tickers configured: 14
+2026-06-28 11:16:14,460 INFO root Portfolio positions configured: 2
+2026-06-28 11:16:14,474 INFO root Manual-only mode: reading market data from CSV cache data/cache/market_cache.csv.
+2026-06-28 11:16:14,481 INFO root Provider used: csv
+2026-06-28 11:16:14,481 INFO root Data quality: Degraded
+2026-06-28 11:16:14,490 INFO root Market history written to reports/history.csv with 36 rows.
+2026-06-28 11:16:14,608 INFO root Latest signal written to reports/latest_signal.json
+2026-06-28 11:16:14,608 INFO root Excel dashboard written to reports/investment_dashboard.xlsx
+2026-06-28 11:16:14,608 INFO root HTML dashboard written to reports/dashboard.html
+2026-06-28 11:16:14,608 INFO root Deployment summary written to reports/deployment_summary.txt
+2026-06-28 11:16:14,608 INFO root Recommendation: Uncertain
+2026-06-28 11:16:14,608 INFO root Market mode: Mixed
+2026-06-28 11:16:14,608 INFO root Confidence: 38
+2026-06-28 11:16:14,608 INFO root AIOS run completed.

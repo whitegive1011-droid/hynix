@@ -36,6 +36,7 @@ class BasketSnapshot:
     hbm_1d: float | None = None
     hbm_5d: float | None = None
     hbm_20d: float | None = None
+    d1: float | None = None
     d5: float | None = None
     d20: float | None = None
     relative_ratio: float | None = None
@@ -51,6 +52,7 @@ class BasketSnapshot:
             hbm_1d=_optional_float(_get(row, "HBM_1D")),
             hbm_5d=_optional_float(_get(row, "HBM_5D")),
             hbm_20d=_optional_float(_get(row, "HBM_20D")),
+            d1=_optional_float(_get(row, "D1")),
             d5=_optional_float(_get(row, "D5")),
             d20=_optional_float(_get(row, "D20")),
             relative_ratio=_optional_float(_get(row, "Relative_Ratio")),

@@ -18,6 +18,7 @@ BASKET_COLUMNS = [
     "HBM_1D",
     "HBM_5D",
     "HBM_20D",
+    "D1",
     "D5",
     "D20",
     "Relative_Ratio",
@@ -56,6 +57,7 @@ def calculate_basket_metrics(
             metrics["HBM_Basket"].pct_change(horizon, fill_method=None) * 100
         )
 
+    metrics["D1"] = metrics["HBM_1D"] - metrics["AI_1D"]
     metrics["D5"] = metrics["HBM_5D"] - metrics["AI_5D"]
     metrics["D20"] = metrics["HBM_20D"] - metrics["AI_20D"]
     metrics["Relative_Ratio"] = metrics["HBM_Basket"] / metrics["AI_Basket"]

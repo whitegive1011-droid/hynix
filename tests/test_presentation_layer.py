@@ -30,7 +30,13 @@ def test_context_to_dict_renders_decision_without_recalculating() -> None:
     assert payload["current_position"] == 300
     assert payload["suggested_position"] == 300
     assert payload["relative_ratio"] == 1.08
+    assert payload["samsung_hynix_market_cap_ratio"] == 2.1
+    assert payload["samsung_hynix_market_cap_ratio_display"] == "2.100"
     assert payload["risk_score"] == 12.5
+    assert any(
+        indicator["label"] == "D1" and indicator["display_value"] == "0.2%"
+        for indicator in payload["key_indicators"]
+    )
     assert payload["data_source"] == "Manual Upload Only"
     assert payload["last_update"] == "2026-06-26"
     assert payload["data_quality"] == "OK"
@@ -63,6 +69,10 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
                 history_depth_by_ticker={"AI1": 21, "HBM1": 6},
                 five_day_readiness={"AI1": True, "HBM1": True},
                 twenty_day_readiness={"AI1": True, "HBM1": False},
+                samsung_hynix_market_cap_ratio=2.1,
+                samsung_market_cap=630.0,
+                sk_hynix_market_cap=300.0,
+                market_cap_ratio_date="2026-06-26",
             )
         ),
         tmp_path,
@@ -84,6 +94,8 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert "Today's Recommendation" in html
     assert "Hold" in html
     assert "Risk Score" in html
+    assert "D1" in html
+    assert "Samsung / SK Hynix Market Cap Ratio" in html
     assert "Data Source" in html
     assert "Data Quality" in html
     assert "Manual Input" in html
@@ -116,7 +128,7 @@ def test_generate_presentation_outputs(tmp_path: Path) -> None:
     assert dashboard["B16"].value == "Low"
     assert dashboard["B17"].value == "Uptrend"
     assert dashboard.freeze_panes == "A3"
-    assert dashboard.auto_filter.ref == "A3:B24"
+    assert dashboard.auto_filter.ref == "A3:B26"
     assert len(dashboard._charts) == 1
     assert len(list(dashboard.conditional_formatting)) > 0
 
@@ -191,6 +203,7 @@ def _presentation_context(
         hbm_1d=1.4,
         hbm_5d=5.5,
         hbm_20d=10.2,
+        d1=0.2,
         d5=1.4,
         d20=1.4,
         relative_ratio=1.08,
@@ -224,5 +237,9 @@ def _presentation_context(
             missing_tickers=[],
             data_quality_score=100,
             cache_coverage_percentage=100.0,
+            samsung_hynix_market_cap_ratio=2.1,
+            samsung_market_cap=630.0,
+            sk_hynix_market_cap=300.0,
+            market_cap_ratio_date="2026-06-26",
         ),
     )

@@ -81,6 +81,11 @@ def _render_dashboard_sheet(sheet, context: PresentationContext) -> None:
         ("Risk Score", context.basket.risk_score),
         ("Missing Tickers", ", ".join(context.metadata.missing_tickers) or "None"),
         ("Stale Tickers", ", ".join(context.metadata.stale_tickers or []) or "None"),
+        (
+            "Samsung / SK Hynix Market Cap Ratio",
+            context.metadata.samsung_hynix_market_cap_ratio,
+        ),
+        ("Market Cap Ratio Date", context.metadata.market_cap_ratio_date),
     ]
     _write_key_value_rows(sheet, rows, start_row=3)
 

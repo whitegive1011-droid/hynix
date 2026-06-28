@@ -38,6 +38,12 @@ Only `date`, `ticker`, and `close` are required. `change_pct`, `market_cap`,
 `binance_proxy`, `okx_proxy`, `futu_official`, `manual_official`, `futu`,
 `binance`, and `okx`. AIOS stores the normalized source as `manual_upload`.
 
+`close` is the market price. `market_cap` is company market capitalization.
+AIOS calculates `Samsung / SK Hynix Market Cap Ratio` only when both
+`005930.KS` and `000660.KS` include `market_cap` on the same date. Use the
+same unit for both values, such as USD billions, KRW trillions, or any other
+consistent unit. If either value is blank, the ratio remains `N/A`.
+
 Example:
 
 ```csv
@@ -47,6 +53,14 @@ date,ticker,close,change_pct,market_cap,source,note
 2026-06-27,MSFT,375.61,5.00,,futu,"Manual price"
 2026-06-27,MU,1143.47,0.48,,binance_proxy,"Accepted as manual upload"
 2026-06-27,000660.KS,2673000,-8.36,,okx,"SK Hynix manual price"
+```
+
+Market-cap example:
+
+```csv
+date,ticker,close,change_pct,market_cap,source,note
+2026-06-27,000660.KS,1768.32,-0.12,300,manual,"SK Hynix market cap, same unit"
+2026-06-27,005930.KS,226.96,0.10,630,manual,"Samsung market cap, same unit"
 ```
 
 Rows are upserted by `date,ticker`. Submitting the same ticker/date again
@@ -173,6 +187,8 @@ Common causes:
 - 5D history has fewer than 6 trading days.
 - 20D history has fewer than 21 trading days.
 - The product ticker exists but AI/HBM basket tickers are incomplete.
+- `Samsung / SK Hynix Market Cap Ratio` is `N/A` unless both `market_cap`
+  values are uploaded in the same unit.
 
 AIOS must not invent missing prices. Missing data should remain `N/A`.
 
